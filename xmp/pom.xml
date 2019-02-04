@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>de.intranda.goobi.plugins.step</groupId>
+	<artifactId>xmp</artifactId>
+	<version>${goobi.pluginversion}</version>
+	<packaging>pom</packaging>
+
+	<properties>
+		<goobi.pluginversion>0.0.1-SNAPSHOT</goobi.pluginversion>
+		<dest.folder.main>/opt/digiverso/goobi/plugins/step/</dest.folder.main>
+		<dest.folder.gui>/opt/digiverso/goobi/plugins/GUI/</dest.folder.gui>
+		<jar.name>plugin_intranda_step_example</jar.name>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+	</properties>
+	
+	
+	<url>http://maven.apache.org</url>
+	<distributionManagement>
+		<repository>
+			<id>intranda</id>
+			<url>http://nexus.intranda.com/repository/intranda</url>
+		</repository>
+	</distributionManagement>
+	<repositories>
+		<repository>
+			<id>intranda</id>
+			<url>https://nexus.intranda.com/repository/intranda</url>
+		</repository>
+	</repositories>
+
+	<dependencies>
+		<dependency>
+			<groupId>de.intranda.goobi.workflow</groupId>
+			<artifactId>goobi-core-jar</artifactId>
+			<version>3.0.3</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+        
+        <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.4</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+  <modules>
+    <module>module-gui</module>
+    <module>module-main</module>
+  </modules>
+</project>

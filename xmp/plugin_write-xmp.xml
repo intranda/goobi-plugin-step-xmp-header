@@ -1,0 +1,82 @@
+<!--
+    * This file is part of a plugin for Goobi - a Workflow tool for the support of mass digitization.
+    *
+    * Visit the websites for more information.
+    * - https://goobi.io
+    * - https://www.intranda.com
+    * - https://github.com/intranda/goobi
+    *
+    * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free
+    * Software Foundation; either version 2 of the License, or (at your option) any later version.
+    *
+    * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+    *
+    * You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59
+    * Temple Place, Suite 330, Boston, MA 02111-1307 USA
+    *
+-->
+<config_plugin>
+    <!--
+        order of configuration is:
+        1.) project name and step name matches
+        2.) step name matches and project is *
+        3.) project name matches and step name is *
+        4.) project name and step name are *
+    -->
+    <config>
+        <!-- which projects to use for (can be more then one, otherwise use *) -->
+        <project>*</project>
+        <step>*</step>
+        <!-- which images to use -->
+        <useDerivateFolder>true</useDerivateFolder>
+        <useMasterFolder>false</useMasterFolder>
+	<command>/usr/bin/exiftool</command>
+	<!-- Each parameter is comma separated, double quotation " can be used.
+	{PARAM} is replaced by the list of fields, {FILE} is replaced with the current file -->
+        <parameter>-overwrite_original, -q, -q, -m, -sep, {PARAM}, {FILE}</parameter>
+        <!-- @name - xmp field name -->
+        <imageMetadataField name="-xmp:Location">
+        <!-- separator - use this to separate the different entries. Default is white space (\u0020) -->
+            <separator>;</separator>
+            <goobiField>
+                <!-- type: - type of the field, staticText, metadata, person or docstruct, default is metadata -->
+                <type>metadata</type>
+                <!-- name: - name of the metadata field -->
+                <name>PlaceOfPublication</name>
+                <!-- use: - default is logical , use value from the physical, logical, anchor, current, page docstruct or from all elements -->
+                <use>logical</use> <!-- physical|logical|anchor|page|current|all-->
+                <!-- separator - use this separator to separate the different occurences of a field, default is blank -->
+                <separator>;</separator>
+                <!-- useFirst: - use only the first occurence or all - default is true -->
+                <useFirst>false</useFirst>
+                <!-- staticPrefix: - text gets added before the metadata value, leading/trailing white spaces must be encoded \u0020 -->
+                <staticPrefix>some static text \u0020</staticPrefix>
+                <!-- staticSuffix: - text gets added after the metadata value -->
+                <staticSuffix>\u0020additional text</staticSuffix>
+            </goobiField>
+
+            <goobiField>
+                <type>docstruct</type>
+                <!-- language - which language should be used - if not given, the internal names are used -->
+                <language>en</language>
+                <!-- use - use the first docstruct (usually the monograph), the last docstruct (the deepest in hierarchy) or all together -->
+                <use>all</use>
+                <separator>;\u0020</separator>
+            </goobiField>
+            <goobiField>
+                <type>staticText</type>
+                <text>bla</text>
+            </goobiField>
+        </imageMetadataField>
+        <imageMetadataField name="-xmp:Creator">
+ 	     <separator>;</separator>
+            <goobiField>
+                <type>metadata</type>
+                <name>Author</name>
+                <use>all</use>
+                <useFirst>false</useFirst>
+            </goobiField>
+        </imageMetadataField>
+    </config>
+</config_plugin>
