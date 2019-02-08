@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -12,8 +13,10 @@ import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
 import org.apache.commons.lang.StringUtils;
+import org.goobi.beans.LogEntry;
 import org.goobi.beans.Process;
 import org.goobi.beans.Step;
+import org.goobi.production.enums.LogType;
 import org.goobi.production.enums.PluginGuiType;
 import org.goobi.production.enums.PluginReturnValue;
 import org.goobi.production.enums.PluginType;
@@ -31,6 +34,7 @@ import de.sub.goobi.helper.ShellScript;
 import de.sub.goobi.helper.StorageProvider;
 import de.sub.goobi.helper.exceptions.DAOException;
 import de.sub.goobi.helper.exceptions.SwapException;
+import de.sub.goobi.persistence.managers.ProcessManager;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
@@ -143,12 +147,19 @@ public class XmpPlugin implements IStepPluginVersion2 {
             return PluginReturnValue.FINISH;
         }
         prefs = process.getRegelsatz().getPreferences();
+        // prefs not readable
+        if (prefs == null) {
+            writeLogEntry(LogType.ERROR, "Ruleset is not valid.");
+            return PluginReturnValue.ERROR;
+        }
+
         Fileformat fileformat = null;
         logical = null;
         anchor = null;
         physical = null;
         List<DocStruct> pages = null;
         try {
+            // read metadata
             fileformat = process.readMetadataFile();
 
             logical = fileformat.getDigitalDocument().getLogicalDocStruct();
@@ -162,12 +173,14 @@ public class XmpPlugin implements IStepPluginVersion2 {
             }
         } catch (UGHException | IOException | InterruptedException | SwapException | DAOException e) {
             // cannot read metadata, error
+            writeLogEntry(LogType.ERROR, "Cannot read metadata.");
             log.error(e);
             return PluginReturnValue.ERROR;
         }
 
         if (pages == null || pages.isEmpty()) {
             // no pages referenced in mets file, error
+            writeLogEntry(LogType.ERROR, "Cannot write xmp data, no pages are referenced in mets file.");
             return PluginReturnValue.ERROR;
         }
 
@@ -176,6 +189,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
         if (config.isUseMasterFolder()) {
             if (pages.size() != masterImages.size()) {
                 // size in folder and mets file don't match, error
+                writeLogEntry(LogType.ERROR, "Different number of objects in master folder and in mets file.");
                 return PluginReturnValue.ERROR;
             }
             writeMetadataToImages(pages, masterImages);
@@ -184,13 +198,20 @@ public class XmpPlugin implements IStepPluginVersion2 {
         if (config.isUseDerivateFolder()) {
             if (pages.size() != derivateImages.size()) {
                 // size in folder and mets file don't match, error
+                writeLogEntry(LogType.ERROR, "Different number of objects in media folder and in mets file.");
                 return PluginReturnValue.ERROR;
             }
             writeMetadataToImages(pages, derivateImages);
         }
-
         return PluginReturnValue.FINISH;
     }
+
+    /**
+     * Write the configured fields to all pages. The metadata is collected for each page individually
+     * 
+     * @param pages list of docstruct elements of all pages
+     * @param images list of image names
+     */
 
     private void writeMetadataToImages(List<DocStruct> pages, List<Path> images) {
 
@@ -199,6 +220,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
             Path image = images.get(i);
 
             List<String> xmpFields = new ArrayList<>();
+            // handle different xmp fields
             for (ImageMetadataField xmpFieldConfiguration : config.getConfiguredFields()) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(xmpFieldConfiguration.getXmpName());
@@ -206,23 +228,27 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 StringBuilder completeValue = new StringBuilder();
                 for (IMetadataField configuredField : xmpFieldConfiguration.getFieldList()) {
                     StringBuilder fieldValue = new StringBuilder();
+                    // get information from docstructs
                     if (configuredField instanceof DocstructField) {
                         DocstructField docstructField = (DocstructField) configuredField;
 
                         String language = docstructField.getLanguage();
                         String use = docstructField.getUse();
-
+                        // abort if page is not assigned to any docstruct
                         List<Reference> pageReferences = page.getAllFromReferences();
                         if (pageReferences == null || pageReferences.isEmpty()) {
                             continue;
                         }
                         if (use.equals("first")) {
+                            // use first (probably main) element
                             DocStruct ds = pageReferences.get(0).getSource();
                             fieldValue.append(ds.getType().getNameByLanguage(language));
                         } else if (use.equals("last")) {
+                            // use last element
                             DocStruct ds = pageReferences.get(pageReferences.size() - 1).getSource();
                             fieldValue.append(ds.getType().getNameByLanguage(language));
                         } else {
+                            // use all referenced elements
                             for (Reference ref : pageReferences) {
                                 // if its not first entry, add separator value
                                 if (fieldValue.length() != 0) {
@@ -243,7 +269,6 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         String name = metadataField.getName();
                         MetadataType mdt = prefs.getMetadataTypeByName(name);
                         if (mdt == null) {
-                            // TODO error?
                             return;
                         }
                         String value = null;
@@ -251,20 +276,25 @@ public class XmpPlugin implements IStepPluginVersion2 {
 
                         switch (metadataField.getUse()) {
                             case "physical":
+                                // get metadata from physical main element (physical location)
                                 value = getMetadataValue(mdt, physical, metadataField.isUseFirst(), metadataField.getSeparator());
                                 break;
                             case "page":
+                                // get metadata from physical page element (urn)
                                 value = getMetadataValue(mdt, page, metadataField.isUseFirst(), metadataField.getSeparator());
                                 break;
                             case "logical":
+                                // get metadata from top element (main title)
                                 value = getMetadataValue(mdt, logical, metadataField.isUseFirst(), metadataField.getSeparator());
                                 break;
                             case "anchor":
+                                // get metadata from anchor element (publisher)
                                 if (anchor != null) {
                                     value = getMetadataValue(mdt, anchor, metadataField.isUseFirst(), metadataField.getSeparator());
                                 }
                                 break;
                             case "current":
+                                // get metadata from last element (chapter title)
                                 if (pageReferences == null || pageReferences.isEmpty()) {
                                     break;
                                 }
@@ -274,6 +304,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                                 break;
                             default:
                                 //  any/all
+                                // get metadata from all logical elements
                                 if (pageReferences == null || pageReferences.isEmpty()) {
                                     break;
                                 }
@@ -295,10 +326,13 @@ public class XmpPlugin implements IStepPluginVersion2 {
                             if (fieldValue.length() != 0) {
                                 fieldValue.append(metadataField.getSeparator());
                             }
+                            // add prefix
                             if (StringUtils.isNotBlank(metadataField.getStaticPrefix())) {
                                 fieldValue.append(metadataField.getStaticPrefix());
                             }
+                            // add element
                             fieldValue.append(value);
+                            // add suffix
                             if (StringUtils.isNotBlank(metadataField.getStaticSuffix())) {
                                 fieldValue.append(metadataField.getStaticSuffix());
                             }
@@ -311,6 +345,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         completeValue.append(fieldValue.toString());
 
                     } else if (configuredField instanceof StaticText) {
+                        // add static text
                         StaticText staticText = (StaticText) configuredField;
                         if (completeValue.length() > 0) {
                             completeValue.append(xmpFieldConfiguration.getSeparator());
@@ -323,6 +358,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 xmpFields.add(sb.toString());
             }
 
+            // get configured parameter list, replace PARAM and FILE with actual values
             List<String> parameterList = new ArrayList<>();
             for (String tok : config.getParameter()) {
                 if ("{PARAM}".equals(tok)) {
@@ -337,11 +373,14 @@ public class XmpPlugin implements IStepPluginVersion2 {
             }
             //            `["exiftool", "-overwrite_original", "-q", "-q", "-m", "-sep", ", ", "-xmp:location={}".format(location), "-xmp:Creator={}".format(photog), "-xmp:Description={}".format(im_caption), "-xmp:Subject={}".format(im_keywords),''
             try {
+                // run script for current image
                 ShellScript s = new ShellScript(Paths.get(config.getCommand()));
                 int returnValue = s.run(parameterList);
 
                 if (returnValue != 0) {
-                    log.error(s.getStdErr());
+                    List<String> errors = s.getStdErr();
+                    writeLogEntry(LogType.ERROR, errors.toString());
+                    log.error(errors);
                     return;
                 }
             } catch (IOException | InterruptedException e) {
@@ -351,6 +390,17 @@ public class XmpPlugin implements IStepPluginVersion2 {
         }
 
     }
+
+    /**
+     * Get metadata value for a given metadata type from a docstruct. The metadataType can be a person or a simple metadata. If no metadata with this
+     * type is found, an empty String is returned
+     * 
+     * @param metadataType {@link MetadataType} the type
+     * @param docstruct {@link DocStruct} current docstruct
+     * @param useFirst stop after first occurrence or use all
+     * @param separator use this character to separate entries, if useFirst is set to false
+     * @return
+     */
 
     private String getMetadataValue(MetadataType metadataType, DocStruct docstruct, boolean useFirst, String separator) {
         StringBuilder result = new StringBuilder();
@@ -455,7 +505,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
             List<SubnodeConfiguration> goobiFieldElements = fieldElement.configurationsAt("/goobiField");
 
             for (SubnodeConfiguration goobiFieldElement : goobiFieldElements) {
-
+                // metadata block
                 switch (goobiFieldElement.getString("./type", "metadata")) {
                     case "metadata":
                         MetadataField metadataField = new MetadataField();
@@ -467,7 +517,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         metadataField.setStaticSuffix(goobiFieldElement.getString("./staticSuffix", "").replace("\\u0020", " "));
                         imageMetadataField.addField(metadataField);
                         break;
-
+                        // docstruct
                     case "docstruct":
 
                         DocstructField docStructField = new DocstructField();
@@ -475,9 +525,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         docStructField.setSeparator(goobiFieldElement.getString("./separator", " ").replace("\\u0020", " "));
                         docStructField.setUse(goobiFieldElement.getString("./use", "last"));
                         imageMetadataField.addField(docStructField);
-
                         break;
-
+                        // static text
                     case "staticText":
                         StaticText text = new StaticText();
                         text.setText(goobiFieldElement.getString("./text"));
@@ -488,6 +537,23 @@ public class XmpPlugin implements IStepPluginVersion2 {
         }
 
         return config;
+    }
+
+    /**
+     * write log entry in case of errors
+     * 
+     * @param type {@link LogType}
+     * @param text Text is added as content
+     */
+
+    private void writeLogEntry(LogType type, String text) {
+        LogEntry logEntry = new LogEntry();
+        logEntry.setContent(text);
+        logEntry.setProcessId(process.getId());
+        logEntry.setType(type);
+        logEntry.setCreationDate(new Date());
+        logEntry.setUserName("xmp plugin");
+        ProcessManager.saveLogEntry(logEntry);
     }
 
 }
