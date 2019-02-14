@@ -8,10 +8,10 @@
 	<packaging>pom</packaging>
 
 	<properties>
-		<goobi.pluginversion>0.0.1-SNAPSHOT</goobi.pluginversion>
+		<goobi.pluginversion>1.0</goobi.pluginversion>
 		<dest.folder.main>/opt/digiverso/goobi/plugins/step/</dest.folder.main>
 		<dest.folder.gui>/opt/digiverso/goobi/plugins/GUI/</dest.folder.gui>
-		<jar.name>plugin_intranda_step_example</jar.name>
+		<jar.name>plugin_intranda_step_xmp</jar.name>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
@@ -54,7 +54,7 @@
         </dependency>
     </dependencies>
   <modules>
-    <module>module-gui</module>
+<!--     <module>module-gui</module> -->
     <module>module-main</module>
   </modules>
 </project>
