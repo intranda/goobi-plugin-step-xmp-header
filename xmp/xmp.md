@@ -44,7 +44,7 @@ Die Konfiguration erfolgt über die Konfigurationsdatei plugin_write-xmp.xml und
             <!-- separator - use this to separate the different entries. Default is white space (\u0020) -->
             <separator>;</separator>
             <goobiField>
-                <!-- type: - type of the field, staticText, metadata or docstruct, default is metadata -->
+                <!-- type: - type of the field: templateproperty, workpieceproperty, processproperty, staticText, metadata or docstruct, default is metadata -->
                 <type>metadata</type>
                 <!-- name: - name of the metadata field -->
                 <name>PlaceOfPublication</name>
@@ -72,6 +72,24 @@ Die Konfiguration erfolgt über die Konfigurationsdatei plugin_write-xmp.xml und
                 <type>staticText</type>
                 <text>some example text</text>
             </goobiField>
+            <goobiField>
+                <type>processproperty</type>
+                <name>Physikalischer Standort</name>
+                <useFirst>true</useFirst>
+                <separator>;</separator>
+            </goobiField>
+            <goobiField>
+                <type>templateproperty</type>
+                <name>Artist</name>
+                <useFirst>true</useFirst>
+                <separator>;</separator>
+            </goobiField>
+            <goobiField>
+                <type>workpieceproperty</type>
+                <name>Hersteller der digit. Ausgabe</name>
+                <useFirst>true</useFirst>
+                <separator>;</separator>
+            </goobiField>
         </imageMetadataField>
     </config>
 </config_plugin>
@@ -92,7 +110,19 @@ Die einzelnen Felder können Kommasepariert angegeben, dann werden sie beim Aufr
 
 Innerhalb des Feldes gibt es ein oder mehrere *&lt;goobiField>* Elemente. Diese enthalten die in Goobi verwendeten Metadaten, mit denen das Bildfeld gefüllt werden soll. Für den Fall, dass mehrere *&lt;goobiField>* verwendet wurden, kann ein *&lt;separator>* definiert werden, der die einzelnen Daten trennt. Führende oder endende Leerzeichen müssen unicode masiert mittels \u0020 angegeben werden. Die einzelnen Felder werden in der Reihenfolge hinzugefügt, in der sie konfiguriert wurde.
 
-Jedes *&lt;goobiField>* Element enthält eine Reihe von Unterelementen. Mittels &lt;type> wird festgelegt, um was für ein Element es sich handelt. Mögliche Werte sind staticText, metadata oder docstruct.
+Jedes *&lt;goobiField>* Element enthält eine Reihe von Unterelementen. Mittels &lt;type> wird festgelegt, um was für ein Element es sich handelt. Mögliche Werte sind processproperty, templateproperty, workpieceproperty, staticText, metadata oder docstruct.
+
+### processproperty, templateproperty, workpieceproperty
+
+Eigenschaften werden in der Goobi Datenbank gesucht. Sie enthalten daher immer identische Werte für alle Bilder. Es werden bis zu drei weitere Unterfelder erwartet:
+
+* &lt;name>: enthält den Namen der Eigenschaft, dessen Wert genutzt werden soll
+* &lt;useFirst>: enthält dieses Feld den Wert true, wird der erste gefundene Wert genommen, ansonsetn wird nach weiteren Werten gesucht
+* &lt;separator>: die hier konfigurierten Zeichen werden als Separator genutzt, falls mehr als ein Eintrag gefunden wurde.
+
+### staticText
+
+Bei der Verwendung von staticText wird ein zusätzliches Feld *&lt;text>* erwartet. Dessen Inhalt wird unverändert übernommen.
 
 ### metadata
 
@@ -123,10 +153,6 @@ Bei docstruct werden folgende Felder erwartet:
   * *last*: Nutze das Element, dass dem aktuellen Bild zugeordet wurde und in der Hierarchie am tiefsten liegt. Zum Beispiel ein Kapitel oder ein Artikel.
   * *all*: Nutze alle zugewiesenen Strukturelemente, beginnend mit dem höchsten Element.
 * *&lt;separator>*: Dieser Separator wird bei der Verwendung von *all* zur Trennung der einzelnen Strukturelemente genutzt.
-
-### staticText
-
-Bei der Verwendung von staticText wird ein zusätzliches Feld *&lt;text>* erwartet. Dessen Inhalt wird unverändert übernommen.
 
 ## Nutzung in Goobi
 

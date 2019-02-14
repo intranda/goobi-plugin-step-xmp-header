@@ -14,8 +14,13 @@ import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
 import org.apache.commons.lang.StringUtils;
 import org.goobi.beans.LogEntry;
+import org.goobi.beans.Masterpiece;
+import org.goobi.beans.Masterpieceproperty;
 import org.goobi.beans.Process;
+import org.goobi.beans.Processproperty;
 import org.goobi.beans.Step;
+import org.goobi.beans.Template;
+import org.goobi.beans.Templateproperty;
 import org.goobi.production.enums.LogType;
 import org.goobi.production.enums.PluginGuiType;
 import org.goobi.production.enums.PluginReturnValue;
@@ -27,7 +32,10 @@ import de.intranda.goobi.plugins.step.xmp.util.DocstructField;
 import de.intranda.goobi.plugins.step.xmp.util.IMetadataField;
 import de.intranda.goobi.plugins.step.xmp.util.ImageMetadataField;
 import de.intranda.goobi.plugins.step.xmp.util.MetadataField;
+import de.intranda.goobi.plugins.step.xmp.util.ProcesspropertyField;
 import de.intranda.goobi.plugins.step.xmp.util.StaticText;
+import de.intranda.goobi.plugins.step.xmp.util.TemplatepropertyField;
+import de.intranda.goobi.plugins.step.xmp.util.WorkpiecepropertyField;
 import de.sub.goobi.config.ConfigPlugins;
 import de.sub.goobi.helper.NIOFileUtils;
 import de.sub.goobi.helper.ShellScript;
@@ -351,13 +359,89 @@ public class XmpPlugin implements IStepPluginVersion2 {
                             completeValue.append(xmpFieldConfiguration.getSeparator());
                         }
                         completeValue.append(staticText.getText());
+                    } else if (configuredField instanceof ProcesspropertyField) {
+
+                        ProcesspropertyField field = (ProcesspropertyField) configuredField;
+
+                        StringBuilder subValue = new StringBuilder();
+                        for (Processproperty prop : process.getEigenschaften()) {
+                            if (prop.getTitel().equals(field.getName())) {
+                                if (subValue.length() > 0) {
+                                    subValue.append(field.getSeparator());
+                                }
+                                subValue.append(prop.getWert());
+                                if (field.isUseFirst()) {
+                                    break;
+                                }
+                            }
+                        }
+                        if (subValue.length() > 0) {
+                            if (completeValue.length() > 0) {
+                                completeValue.append(xmpFieldConfiguration.getSeparator());
+                            }
+                            completeValue.append(subValue.toString());
+                        }
+                    }
+
+                    else if (configuredField instanceof TemplatepropertyField) {
+
+                        TemplatepropertyField field = (TemplatepropertyField) configuredField;
+                        StringBuilder subValue = new StringBuilder();
+                        if (process.getVorlagen() != null) {
+                            for (Template template : process.getVorlagen()) {
+                                for (Templateproperty prop : template.getEigenschaften()) {
+                                    if (prop.getTitel().equals(field.getName())) {
+                                        if (subValue.length() > 0) {
+                                            subValue.append(field.getSeparator());
+                                        }
+                                        subValue.append(prop.getWert());
+                                        if (field.isUseFirst()) {
+                                            break;
+                                        }
+                                    }
+
+                                }
+                            }
+                            if (subValue.length() > 0) {
+                                if (completeValue.length() > 0) {
+                                    completeValue.append(xmpFieldConfiguration.getSeparator());
+                                }
+                                completeValue.append(subValue.toString());
+                            }
+                        }}
+
+                    else if (configuredField instanceof WorkpiecepropertyField) {
+
+                        WorkpiecepropertyField field = (WorkpiecepropertyField) configuredField;
+                        StringBuilder subValue = new StringBuilder();
+                        if (process.getWerkstuecke() != null) {
+                            for (Masterpiece workpiece : process.getWerkstuecke()) {
+                                for (Masterpieceproperty prop : workpiece.getEigenschaften()) {
+                                    if (prop.getTitel().equals(field.getName())) {
+                                        if (subValue.length() > 0) {
+                                            subValue.append(field.getSeparator());
+                                        }
+                                        subValue.append(prop.getWert());
+                                        if (field.isUseFirst()) {
+                                            break;
+                                        }
+                                    }
+
+                                }
+                            }
+                            if (subValue.length() > 0) {
+                                if (completeValue.length() > 0) {
+                                    completeValue.append(xmpFieldConfiguration.getSeparator());
+                                }
+                                completeValue.append(subValue.toString());
+                            }
+                        }
                     }
 
                 }
                 sb.append(completeValue);
                 xmpFields.add(sb.toString());
             }
-
             // get configured parameter list, replace PARAM and FILE with actual values
             List<String> parameterList = new ArrayList<>();
             for (String tok : config.getParameter()) {
@@ -531,6 +615,30 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         StaticText text = new StaticText();
                         text.setText(goobiFieldElement.getString("./text"));
                         imageMetadataField.addField(text);
+                        break;
+
+                    case "processproperty":
+                        ProcesspropertyField field = new ProcesspropertyField();
+                        field.setName(goobiFieldElement.getString("./name"));
+                        field.setSeparator(goobiFieldElement.getString("./separator", " ").replace("\\u0020", " "));
+                        field.setUseFirst(goobiFieldElement.getBoolean("./useFirst", true));
+                        imageMetadataField.addField(field);
+                        break;
+
+                    case "templateproperty":
+                        TemplatepropertyField templ = new TemplatepropertyField();
+                        templ.setName(goobiFieldElement.getString("./name"));
+                        templ.setSeparator(goobiFieldElement.getString("./separator", " ").replace("\\u0020", " "));
+                        templ.setUseFirst(goobiFieldElement.getBoolean("./useFirst", true));
+                        imageMetadataField.addField(templ);
+                        break;
+
+                    case "workpieceproperty":
+                        WorkpiecepropertyField work = new WorkpiecepropertyField();
+                        work.setName(goobiFieldElement.getString("./name"));
+                        work.setSeparator(goobiFieldElement.getString("./separator", " ").replace("\\u0020", " "));
+                        work.setUseFirst(goobiFieldElement.getBoolean("./useFirst", true));
+                        imageMetadataField.addField(work);
                         break;
                 }
             }

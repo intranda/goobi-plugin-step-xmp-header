@@ -43,7 +43,7 @@
             <!-- separator - use this to separate the different entries. Default is white space (\u0020) -->
             <separator>;</separator>
             <goobiField>
-                <!-- type: - type of the field, staticText, metadata or docstruct, default is metadata -->
+                <!-- type: - type of the field: workpieceproperty, templateproperty, processproperty, staticText, metadata or docstruct, default is metadata -->
                 <type>metadata</type>
                 <!-- name: - name of the metadata field -->
                 <name>PlaceOfPublication</name>
@@ -72,5 +72,27 @@
                 <text>some example text</text>
             </goobiField>
         </imageMetadataField>
+        
+        <imageMetadataField name="-xmp:Artist">
+                <goobiField>
+                    <type>processproperty</type>
+                    <name>Physikalischer Standort</name>
+                    <useFirst>true</useFirst>
+                    <separator>;</separator>
+                </goobiField>
+                <goobiField>
+                    <type>templateproperty</type>
+                    <name>Artist</name>
+                    <useFirst>true</useFirst>
+                    <separator>;</separator>
+                </goobiField>
+                <goobiField>
+                    <type>workpieceproperty</type>
+                    <name>Hersteller der digit. Ausgabe</name>
+                    <useFirst>true</useFirst>
+                    <separator>;</separator>
+                </goobiField>
+        </imageMetadataField>
+        
     </config>
 </config_plugin>
