@@ -71,6 +71,17 @@
                 <type>staticText</type>
                 <text>some example text</text>
             </goobiField>
+            
+            <goobiField>
+                <type>filename</type>
+                <useAbsolutePath>true</useAbsolutePath>
+            </goobiField>
+            
+            <goobiField>
+                <type>variable</type>
+                <value>text with {processid} in it</value>
+            </goobiField>
+            
         </imageMetadataField>
         
         <imageMetadataField name="-xmp:Artist">

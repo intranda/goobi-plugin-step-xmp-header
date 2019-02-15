@@ -44,7 +44,7 @@ Die Konfiguration erfolgt über die Konfigurationsdatei plugin_write-xmp.xml und
             <!-- separator - use this to separate the different entries. Default is white space (\u0020) -->
             <separator>;</separator>
             <goobiField>
-                <!-- type: - type of the field: templateproperty, workpieceproperty, processproperty, staticText, metadata or docstruct, default is metadata -->
+                <!-- type: - type of the field: templateproperty, workpieceproperty, processproperty, variable, filename, staticText, metadata or docstruct, default is metadata -->
                 <type>metadata</type>
                 <!-- name: - name of the metadata field -->
                 <name>PlaceOfPublication</name>
@@ -90,6 +90,14 @@ Die Konfiguration erfolgt über die Konfigurationsdatei plugin_write-xmp.xml und
                 <useFirst>true</useFirst>
                 <separator>;</separator>
             </goobiField>
+            <goobiField>
+                <type>filename</type>
+                <useAbsolutePath>true</useAbsolutePath>
+            </goobiField>
+            <goobiField>
+                <type>variable</type>
+                <value>text with {processid} in it</value>
+            </goobiField>
         </imageMetadataField>
     </config>
 </config_plugin>
@@ -110,7 +118,7 @@ Die einzelnen Felder können Kommasepariert angegeben, dann werden sie beim Aufr
 
 Innerhalb des Feldes gibt es ein oder mehrere *&lt;goobiField>* Elemente. Diese enthalten die in Goobi verwendeten Metadaten, mit denen das Bildfeld gefüllt werden soll. Für den Fall, dass mehrere *&lt;goobiField>* verwendet wurden, kann ein *&lt;separator>* definiert werden, der die einzelnen Daten trennt. Führende oder endende Leerzeichen müssen unicode masiert mittels \u0020 angegeben werden. Die einzelnen Felder werden in der Reihenfolge hinzugefügt, in der sie konfiguriert wurde.
 
-Jedes *&lt;goobiField>* Element enthält eine Reihe von Unterelementen. Mittels &lt;type> wird festgelegt, um was für ein Element es sich handelt. Mögliche Werte sind processproperty, templateproperty, workpieceproperty, staticText, metadata oder docstruct.
+Jedes *&lt;goobiField>* Element enthält eine Reihe von Unterelementen. Mittels &lt;type> wird festgelegt, um was für ein Element es sich handelt. Mögliche Werte sind processproperty, templateproperty, workpieceproperty, variable, filename, staticText, metadata oder docstruct.
 
 ### processproperty, templateproperty, workpieceproperty
 
@@ -119,6 +127,14 @@ Eigenschaften werden in der Goobi Datenbank gesucht. Sie enthalten daher immer i
 * &lt;name>: enthält den Namen der Eigenschaft, dessen Wert genutzt werden soll
 * &lt;useFirst>: enthält dieses Feld den Wert true, wird der erste gefundene Wert genommen, ansonsetn wird nach weiteren Werten gesucht
 * &lt;separator>: die hier konfigurierten Zeichen werden als Separator genutzt, falls mehr als ein Eintrag gefunden wurde.
+
+### filename
+
+Wenn dieses Feld gesetzt wurde, wird an dieser Stelle der Dateiename des aktuellen Bildes eingefügt. Mittels *&lt;useAbsolutePath>* true|false kann festgelegt werden, ob nur der Name der Datei oder der komplette Pfad gesetzt werden soll.
+
+### variable
+
+Hiermit kann auf die in Goobi bekannten Variablen zugegriffen werden. Der zu ersetzende Text inklusive der variablen Teile wird im Element *&lt;value>* erwartet.
 
 ### staticText
 
