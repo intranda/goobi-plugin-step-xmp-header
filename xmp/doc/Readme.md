@@ -164,7 +164,7 @@ Sofern es sich bei dem Metadatum um eine Person handelt, wird der Wert aus displ
 Bei docstruct werden folgende Felder erwartet:
 
 * *&lt;language>*: hiermit wird definiert, in welcher Sprache der Name der Strukturelemente geschrieben werden soll. Fehlt die Angabe, wird der interne Name genutzt.
-* *&lt;>use>*: definiert, welches Strukturelement genutzt werden soll.
+* *&lt;use>*: definiert, welches Strukturelement genutzt werden soll.
   * *first*: Nutze das erste dem Bild zugeordnete Element. Üblicherweise ist dies die Monographie oder der Band
   * *last*: Nutze das Element, dass dem aktuellen Bild zugeordet wurde und in der Hierarchie am tiefsten liegt. Zum Beispiel ein Kapitel oder ein Artikel.
   * *all*: Nutze alle zugewiesenen Strukturelemente, beginnend mit dem höchsten Element.
