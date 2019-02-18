@@ -37,7 +37,7 @@
         <command>/usr/bin/exiftool</command>
         <!-- Each parameter is comma separated, double quotation " can be used.
 	    {PARAM} is replaced by the list of fields, {FILE} is replaced with the current file -->
-        <parameter>-overwrite_original, -q, -q, -m, -sep, {PARAM}, {FILE}</parameter>
+        <parameter>-overwrite_original, -q, -q, -m, {PARAM}, {FILE}</parameter>
         <!-- @name - xmp field name -->
         <imageMetadataField name="-xmp:Location">
             <!-- separator - use this to separate the different entries. Default is white space (\u0020) -->
@@ -84,7 +84,7 @@
             
         </imageMetadataField>
         
-        <imageMetadataField name="-xmp:Artist">
+        <imageMetadataField name="-xmp:Author">
                 <goobiField>
                     <type>processproperty</type>
                     <name>Physikalischer Standort</name>
