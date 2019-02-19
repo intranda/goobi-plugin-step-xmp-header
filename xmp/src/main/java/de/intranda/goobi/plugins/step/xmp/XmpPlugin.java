@@ -177,8 +177,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
             fileformat = process.readMetadataFile();
             digDoc = fileformat.getDigitalDocument();
             logical = digDoc.getLogicalDocStruct();
+            anchor = logical;
             if (logical.getType().isAnchor()) {
-                anchor = logical;
                 logical = logical.getAllChildren().get(0);
             }
             physical = digDoc.getPhysicalDocStruct();
