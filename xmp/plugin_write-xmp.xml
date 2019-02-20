@@ -26,9 +26,9 @@
     -->
     <config>
         <!-- define for which project this configuration block is used. Is repeatable if the same configuration shall be used on different project, * means any project. -->
-        <project>*</project>
+        <project>documentation</project>
         <!-- define for which step name this configuration block is used. Is repeatable if the same configuration shall be used on different steps, * means any step. -->
-        <step>*</step>
+        <step>example</step>
         <!-- define if the images in master folder are used -->
         <useDerivateFolder>true</useDerivateFolder>
         <!-- define if the images in master folder are used -->
@@ -104,6 +104,190 @@
                     <separator>;</separator>
                 </goobiField>
         </imageMetadataField>
-        
     </config>
+    
+    <!-- configuration for dc header -->
+    <config>
+        <project>*</project>
+        <step>*</step>
+        <useDerivateFolder>true</useDerivateFolder>
+        <useMasterFolder>false</useMasterFolder>
+        <command>/usr/bin/exiftool</command>
+        <parameter>-overwrite_original, -q, -q, -m, {PARAM}, {FILE}</parameter>
+        <!-- creator of the digital document -->
+        <imageMetadataField name="-xmp-dc:Contributor">
+            <goobiField>
+                <type>workpieceproperty</type>
+                <name>Artist</name>
+                <useFirst>true</useFirst>
+            </goobiField>
+        </imageMetadataField>
+        <!-- list of creators of the book -->
+        <imageMetadataField name="-xmp-dc:Creator">
+            <separator>;\u0020</separator>
+            <goobiField>
+                <type>metadata</type>
+                <name>Author</name>
+                <use>logical</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+            </goobiField>
+            <goobiField>
+                <type>metadata</type>
+                <name>Creator</name>
+                <use>logical</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+            </goobiField>
+        </imageMetadataField>
+        <!-- must be a valid date format, either YYYY or YYYY-MM-DD -->
+        <imageMetadataField name="-xmp-dc:Date">
+            <goobiField>
+                <type>metadata</type>
+                <name>PublicationYearSort</name>
+                <use>logical</use>
+                <useFirst>true</useFirst>
+            </goobiField>
+        </imageMetadataField>
+        <!-- any text -->
+        <imageMetadataField name="-xmp-dc:Description">
+            <goobiField>
+                <type>metadata</type>
+                <name>Description</name>
+                <use>logical</use>
+                <useFirst>true</useFirst>
+            </goobiField>
+        </imageMetadataField>
+        <!-- image format -->
+        <imageMetadataField name="-xmp-dc:Format">
+            <goobiField>
+                <type>staticText</type>
+                <text>image/tiff</text>
+            </goobiField>
+        </imageMetadataField>
+        <!-- identifier of the document, could be goobi id, process title or catalogue id -->
+        <imageMetadataField name="-xmp-dc:Identifier">
+            <goobiField>
+                <type>metadata</type>
+                <name>CatalogIDDigital</name>
+                <use>logical</use>
+                <useFirst>true</useFirst>
+            </goobiField>
+        </imageMetadataField>
+        <!-- all languages -->
+        <imageMetadataField name="-xmp-dc:Language">
+            <goobiField>
+                <type>metadata</type>
+                <name>DocLanguage</name>
+                <use>all</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+            </goobiField>
+        </imageMetadataField>
+        <!-- publisher name and publication place -->
+        <imageMetadataField name="-xmp-dc:Publisher">
+            <goobiField>
+                <type>metadata</type>
+                <name>PublisherName</name>
+                <use>all</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+            </goobiField>
+            <goobiField>
+                <type>metadata</type>
+                <name>PlaceOfPublication</name>
+                <use>all</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+            </goobiField>
+        </imageMetadataField>
+        <!-- TODO remove this field? -->
+        <imageMetadataField name="-xmp-dc:Relation">
+            <goobiField>
+                <type>docstruct</type>
+                <language>en</language>
+                <use>all</use>
+                <separator>;\u0020</separator>
+            </goobiField>
+        </imageMetadataField>
+        <!-- access rights -->
+        <imageMetadataField name="-xmp-dc:Rights">
+            <goobiField>
+                <type>metadata</type>
+                <name>AccessLicense</name>
+                <use>logical</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+            </goobiField>
+        </imageMetadataField>
+        <!-- TODO only main title or sub titles as well? -->
+        <imageMetadataField name="-xmp-dc:Title">
+            <goobiField>
+                <type>metadata</type>
+                <name>Title</name>
+                <use>logical</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+            </goobiField>
+        </imageMetadataField>
+        <!-- document type = Manuscript or type = Chapter? -->
+        <imageMetadataField name="-xmp-dc:Type">
+            <goobiField>
+                <type>docstruct</type>
+                <language>en</language>
+                <use>logical</use>
+                <separator>;\u0020</separator>
+            </goobiField>
+        </imageMetadataField>
+        
+        <!-- some additional metadata to identify the document -->
+        <imageMetadataField name="-xmp-dc:Source">
+            <separator>;\u0020</separator>
+            <goobiField>
+                <type>metadata</type>
+                <name>Author</name>
+                <use>all</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+            </goobiField>
+            <goobiField>
+                <type>metadata</type>
+                <name>TitleDocSub1</name>
+                <use>all</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+            </goobiField>  
+            <goobiField>
+                <type>metadata</type>
+                <name>PublicationYear</name>
+                <use>logical</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+            </goobiField>  
+            <goobiField>
+                <type>metadata</type>
+                <name>PlaceOfPublication</name>
+                <use>logical</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+            </goobiField>  
+            <goobiField>
+                <type>metadata</type>
+                <name>PublisherName</name>
+                <use>logical</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+            </goobiField>  
+            <goobiField>
+                <type>metadata</type>
+                <name>physPageNumber</name>
+                <use>page</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+                 <staticPrefix>(page\u0020</staticPrefix>
+                 <staticSuffix>)</staticSuffix>
+            </goobiField>  
+        </imageMetadataField>
+    </config>
+    
 </config_plugin>
