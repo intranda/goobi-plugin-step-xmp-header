@@ -206,7 +206,9 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 writeLogEntry(LogType.ERROR, "Different number of objects in master folder and in mets file.");
                 return PluginReturnValue.ERROR;
             }
-            writeMetadataToImages(pages, masterImages);
+            if (!writeMetadataToImages(pages, masterImages) ) {
+                return PluginReturnValue.ERROR;
+            }
         }
 
         if (config.isUseDerivateFolder()) {
@@ -215,7 +217,9 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 writeLogEntry(LogType.ERROR, "Different number of objects in media folder and in mets file.");
                 return PluginReturnValue.ERROR;
             }
-            writeMetadataToImages(pages, derivateImages);
+            if (!writeMetadataToImages(pages, derivateImages)) {
+                return PluginReturnValue.ERROR;
+            }
         }
         return PluginReturnValue.FINISH;
     }
@@ -227,7 +231,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
      * @param images list of image names
      */
 
-    private void writeMetadataToImages(List<DocStruct> pages, List<Path> images) {
+    private boolean writeMetadataToImages(List<DocStruct> pages, List<Path> images) {
 
         for (int i = 0; i < pages.size(); i++) {
             DocStruct page = pages.get(i);
@@ -283,7 +287,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         String name = metadataField.getName();
                         MetadataType mdt = prefs.getMetadataTypeByName(name);
                         if (mdt == null) {
-                            return;
+                            writeLogEntry(LogType.ERROR, "Cannot find metadata type " + name);
+                            return false;
                         }
                         String value = null;
                         List<Reference> pageReferences = page.getAllFromReferences();
@@ -491,14 +496,14 @@ public class XmpPlugin implements IStepPluginVersion2 {
                     List<String> errors = s.getStdErr();
                     writeLogEntry(LogType.ERROR, errors.toString());
                     log.error(errors);
-                    return;
+                    return false;
                 }
             } catch (IOException | InterruptedException e) {
                 log.error(e);
             }
 
         }
-
+        return true;
     }
 
     /**
