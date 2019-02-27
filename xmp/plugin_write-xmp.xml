@@ -224,7 +224,7 @@
         <imageMetadataField name="-xmp-dc:Title">
             <goobiField>
                 <type>metadata</type>
-                <name>Title</name>
+                <name>TitleDocMain</name>
                 <use>logical</use>
                 <useFirst>false</useFirst>
                 <separator>;\u0020</separator>
@@ -247,6 +247,13 @@
                 <type>metadata</type>
                 <name>Author</name>
                 <use>all</use>
+                <useFirst>false</useFirst>
+                <separator>;\u0020</separator>
+            </goobiField>
+            <goobiField>
+                <type>metadata</type>
+                <name>TitleDocMain</name>
+                <use>logical</use>
                 <useFirst>false</useFirst>
                 <separator>;\u0020</separator>
             </goobiField>
@@ -287,6 +294,14 @@
                  <staticPrefix>(page\u0020</staticPrefix>
                  <staticSuffix>)</staticSuffix>
             </goobiField>  
+            <goobiField>
+                <type>filename</type>
+                <useAbsolutePath>true</useAbsolutePath>
+            </goobiField>
+            <goobiField>
+                <type>variable</type>
+                <value>Goobi-ID {processid}</value>
+            </goobiField>
         </imageMetadataField>
     </config>
     
