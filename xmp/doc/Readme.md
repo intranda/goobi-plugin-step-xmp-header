@@ -44,7 +44,7 @@ Die Konfiguration erfolgt über die Konfigurationsdatei plugin_write-xmp.xml und
             <!-- separator - use this to separate the different entries. Default is white space (\u0020) -->
             <separator>;</separator>
             <goobiField>
-                <!-- type: - type of the field: templateproperty, workpieceproperty, processproperty, staticText, metadata or docstruct, default is metadata -->
+                <!-- type: - type of the field: templateproperty, workpieceproperty, processproperty, variable, filename, staticText, metadata or docstruct, default is metadata -->
                 <type>metadata</type>
                 <!-- name: - name of the metadata field -->
                 <name>PlaceOfPublication</name>
@@ -90,6 +90,14 @@ Die Konfiguration erfolgt über die Konfigurationsdatei plugin_write-xmp.xml und
                 <useFirst>true</useFirst>
                 <separator>;</separator>
             </goobiField>
+            <goobiField>
+                <type>filename</type>
+                <useAbsolutePath>true</useAbsolutePath>
+            </goobiField>
+            <goobiField>
+                <type>variable</type>
+                <value>text with {processid} in it</value>
+            </goobiField>
         </imageMetadataField>
     </config>
 </config_plugin>
@@ -119,6 +127,14 @@ Eigenschaften werden in der Goobi Datenbank gesucht. Sie enthalten daher immer i
 - `<name>`: enthält den Namen der Eigenschaft, dessen Wert genutzt werden soll
 - `<useFirst>`: enthält dieses Feld den Wert true, wird der erste gefundene Wert genommen, ansonsetn wird nach weiteren Werten gesucht
 - `<separator>`: die hier konfigurierten Zeichen werden als Separator genutzt, falls mehr als ein Eintrag gefunden wurde.
+
+### filename
+
+Wenn dieses Feld gesetzt wurde, wird an dieser Stelle der Dateiename des aktuellen Bildes eingefügt. Mittels *&lt;useAbsolutePath>* true|false kann festgelegt werden, ob nur der Name der Datei oder der komplette Pfad gesetzt werden soll.
+
+### variable
+
+Hiermit kann auf die in Goobi bekannten Variablen zugegriffen werden. Der zu ersetzende Text inklusive der variablen Teile wird im Element *&lt;value>* erwartet.
 
 ### staticText
 
@@ -153,6 +169,7 @@ Bei docstruct werden folgende Felder erwartet:
   * `last`: Nutze das Element, dass dem aktuellen Bild zugeordet wurde und in der Hierarchie am tiefsten liegt. Zum Beispiel ein Kapitel oder ein Artikel.
   * `all`: Nutze alle zugewiesenen Strukturelemente, beginnend mit dem höchsten Element.
 * `<separator>`: Dieser Separator wird bei der Verwendung von `all` zur Trennung der einzelnen Strukturelemente genutzt.
+
 
 ## Nutzung in Goobi
 

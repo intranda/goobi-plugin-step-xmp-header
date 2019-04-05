@@ -29,23 +29,27 @@ import org.goobi.production.enums.StepReturnValue;
 import org.goobi.production.plugin.interfaces.IStepPluginVersion2;
 
 import de.intranda.goobi.plugins.step.xmp.util.DocstructField;
+import de.intranda.goobi.plugins.step.xmp.util.FilenameField;
 import de.intranda.goobi.plugins.step.xmp.util.IMetadataField;
 import de.intranda.goobi.plugins.step.xmp.util.ImageMetadataField;
 import de.intranda.goobi.plugins.step.xmp.util.MetadataField;
 import de.intranda.goobi.plugins.step.xmp.util.ProcesspropertyField;
 import de.intranda.goobi.plugins.step.xmp.util.StaticText;
 import de.intranda.goobi.plugins.step.xmp.util.TemplatepropertyField;
+import de.intranda.goobi.plugins.step.xmp.util.VariableField;
 import de.intranda.goobi.plugins.step.xmp.util.WorkpiecepropertyField;
 import de.sub.goobi.config.ConfigPlugins;
 import de.sub.goobi.helper.NIOFileUtils;
 import de.sub.goobi.helper.ShellScript;
 import de.sub.goobi.helper.StorageProvider;
+import de.sub.goobi.helper.VariableReplacer;
 import de.sub.goobi.helper.exceptions.DAOException;
 import de.sub.goobi.helper.exceptions.SwapException;
 import de.sub.goobi.persistence.managers.ProcessManager;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
+import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
 import ugh.dl.Fileformat;
 import ugh.dl.Metadata;
@@ -82,6 +86,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
     private DocStruct logical = null;
     private DocStruct anchor = null;
     private DocStruct physical = null;
+
+    private DigitalDocument digDoc;
 
     private Prefs prefs;
 
@@ -169,13 +175,13 @@ public class XmpPlugin implements IStepPluginVersion2 {
         try {
             // read metadata
             fileformat = process.readMetadataFile();
-
-            logical = fileformat.getDigitalDocument().getLogicalDocStruct();
+            digDoc = fileformat.getDigitalDocument();
+            logical = digDoc.getLogicalDocStruct();
+            anchor = logical;
             if (logical.getType().isAnchor()) {
-                anchor = logical;
                 logical = logical.getAllChildren().get(0);
             }
-            physical = fileformat.getDigitalDocument().getPhysicalDocStruct();
+            physical = digDoc.getPhysicalDocStruct();
             if (physical != null) {
                 pages = physical.getAllChildren();
             }
@@ -200,7 +206,9 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 writeLogEntry(LogType.ERROR, "Different number of objects in master folder and in mets file.");
                 return PluginReturnValue.ERROR;
             }
-            writeMetadataToImages(pages, masterImages);
+            if (!writeMetadataToImages(pages, masterImages) ) {
+                return PluginReturnValue.ERROR;
+            }
         }
 
         if (config.isUseDerivateFolder()) {
@@ -209,7 +217,9 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 writeLogEntry(LogType.ERROR, "Different number of objects in media folder and in mets file.");
                 return PluginReturnValue.ERROR;
             }
-            writeMetadataToImages(pages, derivateImages);
+            if (!writeMetadataToImages(pages, derivateImages)) {
+                return PluginReturnValue.ERROR;
+            }
         }
         return PluginReturnValue.FINISH;
     }
@@ -221,7 +231,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
      * @param images list of image names
      */
 
-    private void writeMetadataToImages(List<DocStruct> pages, List<Path> images) {
+    private boolean writeMetadataToImages(List<DocStruct> pages, List<Path> images) {
 
         for (int i = 0; i < pages.size(); i++) {
             DocStruct page = pages.get(i);
@@ -277,7 +287,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         String name = metadataField.getName();
                         MetadataType mdt = prefs.getMetadataTypeByName(name);
                         if (mdt == null) {
-                            return;
+                            writeLogEntry(LogType.ERROR, "Cannot find metadata type " + name);
+                            return false;
                         }
                         String value = null;
                         List<Reference> pageReferences = page.getAllFromReferences();
@@ -408,7 +419,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
                                 }
                                 completeValue.append(subValue.toString());
                             }
-                        }}
+                        }
+                    }
 
                     else if (configuredField instanceof WorkpiecepropertyField) {
 
@@ -436,8 +448,27 @@ public class XmpPlugin implements IStepPluginVersion2 {
                                 completeValue.append(subValue.toString());
                             }
                         }
-                    }
+                    } else if (configuredField instanceof FilenameField) {
+                        FilenameField field = (FilenameField) configuredField;
+                        if (completeValue.length() > 0) {
+                            completeValue.append(xmpFieldConfiguration.getSeparator());
+                        }
+                        if (field.isUseAbsolutePath()) {
+                            completeValue.append(image.toString());
+                        } else {
+                            completeValue.append(image.getFileName().toString());
+                        }
+                    } else if (configuredField instanceof VariableField) {
+                        VariableField field = (VariableField) configuredField;
 
+                        String value = new VariableReplacer(digDoc, prefs, process, step).replace(field.getName());
+                        if (StringUtils.isNotBlank(value)) {
+                            if (completeValue.length() > 0) {
+                                completeValue.append(xmpFieldConfiguration.getSeparator());
+                            }
+                            completeValue.append(value);
+                        }
+                    }
                 }
                 sb.append(completeValue);
                 xmpFields.add(sb.toString());
@@ -465,14 +496,14 @@ public class XmpPlugin implements IStepPluginVersion2 {
                     List<String> errors = s.getStdErr();
                     writeLogEntry(LogType.ERROR, errors.toString());
                     log.error(errors);
-                    return;
+                    return false;
                 }
             } catch (IOException | InterruptedException e) {
                 log.error(e);
             }
 
         }
-
+        return true;
     }
 
     /**
@@ -639,6 +670,18 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         work.setSeparator(goobiFieldElement.getString("./separator", " ").replace("\\u0020", " "));
                         work.setUseFirst(goobiFieldElement.getBoolean("./useFirst", true));
                         imageMetadataField.addField(work);
+                        break;
+
+                    case "filename":
+                        FilenameField filenameField = new FilenameField();
+                        filenameField.setUseAbsolutePath(goobiFieldElement.getBoolean("./useAbsolutePath", true));
+                        imageMetadataField.addField(filenameField);
+                        break;
+
+                    case "variable":
+                        VariableField variableField = new VariableField();
+                        variableField.setName(goobiFieldElement.getString("./value"));
+                        imageMetadataField.addField(variableField);
                         break;
                 }
             }
