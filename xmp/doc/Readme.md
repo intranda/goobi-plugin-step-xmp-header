@@ -96,50 +96,50 @@ Die Konfiguration erfolgt über die Konfigurationsdatei plugin_write-xmp.xml und
 
 ```
 
-Der *&lt;config>* Block ist wiederholbar und kann so in unterschiedlichen Projekten verschiedene Metadaten definieren. Die Unterelemente *&lt;project>* und *&lt;step>* werden zur Prüfung genutzt, ob der vorliegende Block für den aktuellen Schritt genutzt werden soll. Dabei wird zuerst geprüft, ob es einen Eintrag gibt, der sowohl den Projektnamen als auch den Schrittenamen enthält. Ist dies nicht der Fall, wird nach einem Eintrag für durch den * gekennzeichnete, beliebige Projekte und dem verwendeten Schrittenamen gesucht. Wenn dazu ebenfalls kein Eintrag gefunden wurde, erfolgt eine Suche nach dem Projektnamen und beliebigen Schritten, ansonsten greift der default Block, bei dem sowohl *&lt;project>* als auch *&lt;step>* * enthalten.
+Der `<config>` Block ist wiederholbar und kann so in unterschiedlichen Projekten verschiedene Metadaten definieren. Die Unterelemente `<project>` und `<step>` werden zur Prüfung genutzt, ob der vorliegende Block für den aktuellen Schritt genutzt werden soll. Dabei wird zuerst geprüft, ob es einen Eintrag gibt, der sowohl den Projektnamen als auch den Schrittenamen enthält. Ist dies nicht der Fall, wird nach einem Eintrag für durch den \* gekennzeichnete, beliebige Projekte und dem verwendeten Schrittenamen gesucht. Wenn dazu ebenfalls kein Eintrag gefunden wurde, erfolgt eine Suche nach dem Projektnamen und beliebigen Schritten, ansonsten greift der default Block, bei dem sowohl `<project>` als auch `<step>` \* enthalten.
 
-In den beiden Feldern *&lt;useDerivateFolder>* und *&lt;useMasterFolder>* kann festgelegt werden, ob die Änderungen auf die Dateien im jeweiligen Ordner angewendet werden sollen. Mindestens einer der beiden Werte muss auf *true* gesetzt sein.
+In den beiden Feldern `<useDerivateFolder>` und `<useMasterFolder>` kann festgelegt werden, ob die Änderungen auf die Dateien im jeweiligen Ordner angewendet werden sollen. Mindestens einer der beiden Werte muss auf `true` gesetzt sein.
 
-Mittels *&lt;command>* wird das Tool definiert, das zum schreiben der Daten verwendet wird. Hier können je nach Betriebssystem oder verwendeter Dateiformate unterschiedliche Tools verwendet werden.
+Mittels `<command>` wird das Tool definiert, das zum schreiben der Daten verwendet wird. Hier können je nach Betriebssystem oder verwendeter Dateiformate unterschiedliche Tools verwendet werden.
 
-Das Element *&lt;parameter>* definiert die einzelnen Parameter, die beim Aufruf des Tools übergeben werden. Dabei können zwei Variablen verwendet werden. Mittels *{FILE}* wird der absolute Pfad zur Datei übergeben, die manipuliert werden soll und {PARAM} enthält die konfigurierten Elemente.
+Das Element `<parameter>` definiert die einzelnen Parameter, die beim Aufruf des Tools übergeben werden. Dabei können zwei Variablen verwendet werden. Mittels `{FILE}` wird der absolute Pfad zur Datei übergeben, die manipuliert werden soll und {PARAM} enthält die konfigurierten Elemente.
 
 Die einzelnen Felder können Kommasepariert angegeben, dann werden sie beim Aufruf als einzelne Parameter übergeben. Sollen hingegen die Werte der Parameter ',' enthalten, können die Parameter mittels " maskiert werden.
 
-&lt;imageMetadataField> enthält die Konfiguration für ein einzelnes Feld, dass geschrieben werden soll. Um in einem Aufruf mehrere Felder schreiben zu können, ist dieses Feld wiederholbar. Das Attribut *name* ist verpflichtend und enthält den Feldnamen, der geschrieben werden soll.
+`<imageMetadataField>` enthält die Konfiguration für ein einzelnes Feld, dass geschrieben werden soll. Um in einem Aufruf mehrere Felder schreiben zu können, ist dieses Feld wiederholbar. Das Attribut `name` ist verpflichtend und enthält den Feldnamen, der geschrieben werden soll.
 
-Innerhalb des Feldes gibt es ein oder mehrere *&lt;goobiField>* Elemente. Diese enthalten die in Goobi verwendeten Metadaten, mit denen das Bildfeld gefüllt werden soll. Für den Fall, dass mehrere *&lt;goobiField>* verwendet wurden, kann ein *&lt;separator>* definiert werden, der die einzelnen Daten trennt. Führende oder endende Leerzeichen müssen unicode masiert mittels \u0020 angegeben werden. Die einzelnen Felder werden in der Reihenfolge hinzugefügt, in der sie konfiguriert wurde.
+Innerhalb des Feldes gibt es ein oder mehrere `<goobiField>` Elemente. Diese enthalten die in Goobi verwendeten Metadaten, mit denen das Bildfeld gefüllt werden soll. Für den Fall, dass mehrere `<goobiField>` verwendet wurden, kann ein `<separator>` definiert werden, der die einzelnen Daten trennt. Führende oder endende Leerzeichen müssen unicode masiert mittels \u0020 angegeben werden. Die einzelnen Felder werden in der Reihenfolge hinzugefügt, in der sie konfiguriert wurde.
 
-Jedes *&lt;goobiField>* Element enthält eine Reihe von Unterelementen. Mittels &lt;type> wird festgelegt, um was für ein Element es sich handelt. Mögliche Werte sind processproperty, templateproperty, workpieceproperty, staticText, metadata oder docstruct.
+Jedes `<goobiField>` Element enthält eine Reihe von Unterelementen. Mittels <type> wird festgelegt, um was für ein Element es sich handelt. Mögliche Werte sind processproperty, templateproperty, workpieceproperty, staticText, metadata oder docstruct.
 
 ### processproperty, templateproperty, workpieceproperty
 
 Eigenschaften werden in der Goobi Datenbank gesucht. Sie enthalten daher immer identische Werte für alle Bilder. Es werden bis zu drei weitere Unterfelder erwartet:
 
-* &lt;name>: enthält den Namen der Eigenschaft, dessen Wert genutzt werden soll
-* &lt;useFirst>: enthält dieses Feld den Wert true, wird der erste gefundene Wert genommen, ansonsetn wird nach weiteren Werten gesucht
-* &lt;separator>: die hier konfigurierten Zeichen werden als Separator genutzt, falls mehr als ein Eintrag gefunden wurde.
+- `<name>`: enthält den Namen der Eigenschaft, dessen Wert genutzt werden soll
+- `<useFirst>`: enthält dieses Feld den Wert true, wird der erste gefundene Wert genommen, ansonsetn wird nach weiteren Werten gesucht
+- `<separator>`: die hier konfigurierten Zeichen werden als Separator genutzt, falls mehr als ein Eintrag gefunden wurde.
 
 ### staticText
 
-Bei der Verwendung von staticText wird ein zusätzliches Feld *&lt;text>* erwartet. Dessen Inhalt wird unverändert übernommen.
+Bei der Verwendung von staticText wird ein zusätzliches Feld `<text>` erwartet. Dessen Inhalt wird unverändert übernommen.
 
 ### metadata
 
 Wenn es sich um ein metadata Feld handelt, werden eine Reihe von weiteren Unterelementen erwartet.
 
-* *&lt;name>*: enthält den internen Mame des Metadatums
-* *&lt;>use>*: definiert, in welchen Strukturelementen nach dem Feld gesucht werden soll.
-  * *logical*: die Suche ist auf das Hauptelement wie Monographie oder Band beschränkt. Hier stehen üblicherweise die Daten aus dem OPAC.
-  * *anchor*: die Suche ist auf den anchor wie Mehrbändiges Werk oder Zeitschrift beschränkt.
-  * *physical*: die Suche ist auf das Element physSequence beschränkt. Hier kann zum Beispiel die URN des Werkes gefunden werden.
-  * *current*: die Suche wird nur in dem Element durchgeführt, dass dem aktuellen Bild zugeordet wurde und in der Hierarchie am tiefsten liegt. Zum Beispiel ein Kapitel oder ein Artikel.
-  * *page*: die Suche wird nur innerhalb des page Elements durchgeführt. Hier stehen üblicherweise die granulare URNs oder die physische und logische Seitennummer
-  * *all*: die Suche wird in allen logischen Elementen durchgeführt, die dem Bild zugeordnet sind. Dabei wird mit dem höchsten begonnen.
-* *&lt;separator>*: die hier konfigurierten Zeichen werden als Separator genutzt, falls mehr als ein Eintrag gefunden wurde.
-* *&lt;useFirst>*: enthält dieses Feld den Wert *true*, wird der erste gefundene Wert genommen, ansonsetn wird nach weiteren Werten gesucht
-* *&lt;staticPrefix>*: dieser Text wird vor den Metadateninhalt gesetzt
-* *&lt;staticSuffix>*: dieser Text wird an den Metadateninhalt angehängt.
+* `<name>`: enthält den internen Mame des Metadatums
+* `<use>`: definiert, in welchen Strukturelementen nach dem Feld gesucht werden soll.
+  * `logical`: die Suche ist auf das Hauptelement wie Monographie oder Band beschränkt. Hier stehen üblicherweise die Daten aus dem OPAC.
+  * `anchor`: die Suche ist auf den anchor wie Mehrbändiges Werk oder Zeitschrift beschränkt.
+  * `physical`: die Suche ist auf das Element physSequence beschränkt. Hier kann zum Beispiel die URN des Werkes gefunden werden.
+  * `current`: die Suche wird nur in dem Element durchgeführt, dass dem aktuellen Bild zugeordet wurde und in der Hierarchie am tiefsten liegt. Zum Beispiel ein Kapitel oder ein Artikel.
+  * `page`: die Suche wird nur innerhalb des page Elements durchgeführt. Hier stehen üblicherweise die granulare URNs oder die physische und logische Seitennummer
+  * `all`: die Suche wird in allen logischen Elementen durchgeführt, die dem Bild zugeordnet sind. Dabei wird mit dem höchsten begonnen.
+* `<separator>`: die hier konfigurierten Zeichen werden als Separator genutzt, falls mehr als ein Eintrag gefunden wurde.
+* `<useFirst>`: enthält dieses Feld den Wert `true`, wird der erste gefundene Wert genommen, ansonsetn wird nach weiteren Werten gesucht
+* `<staticPrefix>`: dieser Text wird vor den Metadateninhalt gesetzt
+* `<staticSuffix>`: dieser Text wird an den Metadateninhalt angehängt.
 
 Sofern es sich bei dem Metadatum um eine Person handelt, wird der Wert aus displayName genutzt, ansonsten der normale value.
 
@@ -147,13 +147,13 @@ Sofern es sich bei dem Metadatum um eine Person handelt, wird der Wert aus displ
 
 Bei docstruct werden folgende Felder erwartet:
 
-* *&lt;language>*: hiermit wird definiert, in welcher Sprache der Name der Strukturelemente geschrieben werden soll. Fehlt die Angabe, wird der interne Name genutzt.
-* *&lt;>use>*: definiert, welches Strukturelement genutzt werden soll.
-  * *first*: Nutze das erste dem Bild zugeordnete Element. Üblicherweise ist dies die Monographie oder der Band
-  * *last*: Nutze das Element, dass dem aktuellen Bild zugeordet wurde und in der Hierarchie am tiefsten liegt. Zum Beispiel ein Kapitel oder ein Artikel.
-  * *all*: Nutze alle zugewiesenen Strukturelemente, beginnend mit dem höchsten Element.
-* *&lt;separator>*: Dieser Separator wird bei der Verwendung von *all* zur Trennung der einzelnen Strukturelemente genutzt.
+* `<language>`: hiermit wird definiert, in welcher Sprache der Name der Strukturelemente geschrieben werden soll. Fehlt die Angabe, wird der interne Name genutzt.
+* `<use>`: definiert, welches Strukturelement genutzt werden soll.
+  * `first`: Nutze das erste dem Bild zugeordnete Element. Üblicherweise ist dies die Monographie oder der Band
+  * `last`: Nutze das Element, dass dem aktuellen Bild zugeordet wurde und in der Hierarchie am tiefsten liegt. Zum Beispiel ein Kapitel oder ein Artikel.
+  * `all`: Nutze alle zugewiesenen Strukturelemente, beginnend mit dem höchsten Element.
+* `<separator>`: Dieser Separator wird bei der Verwendung von `all` zur Trennung der einzelnen Strukturelemente genutzt.
 
 ## Nutzung in Goobi
 
-In Goobi muss das Plugin *write-xmp* in den Schritten ausgewählt werden, in denen die Bildmetadaten geschrieben werden sollen. Da das Schreiben der Metadaten auf den Daten der METS Datei beruht und eine fertige Paginierung und Strukutrierung erwartet, sollte das Schreiben der Bilddaten erst nach der Metadatenbearbeitung passieren.
+In Goobi muss das Plugin `write-xmp` in den Schritten ausgewählt werden, in denen die Bildmetadaten geschrieben werden sollen. Da das Schreiben der Metadaten auf den Daten der METS Datei beruht und eine fertige Paginierung und Strukutrierung erwartet, sollte das Schreiben der Bilddaten erst nach der Metadatenbearbeitung passieren.
