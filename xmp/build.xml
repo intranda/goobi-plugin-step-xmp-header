@@ -1,9 +1,7 @@
-<?xml version="1.0"?>
-
-<project name="goobi-plugin-step-mixedocr">
+<project name="goobi-plugin-step-xmpheader" default="devbuild">
 	<target name="devbuild">
 		<exec executable="mvn">
-			<arg value="package" />
+			<arg value="package"/>
 		</exec>
 		<copy file="module-main/target/plugin_intranda_step_xmp.jar" todir="/opt/digiverso/goobi/plugins/step/"/>
 	</target>

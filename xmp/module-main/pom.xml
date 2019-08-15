@@ -34,6 +34,44 @@
 					<skipTests>true</skipTests>
 				</configuration>
 			</plugin>
-			</plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>buildnumber-maven-plugin</artifactId>
+				<version>1.4</version>
+
+				<executions>
+					<execution>
+						<phase>validate</phase>
+						<goals>
+							<goal>create</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<shortRevisionLength>10</shortRevisionLength>
+					<doCheck>false</doCheck>
+				</configuration>
+			</plugin><plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>3.1.0</version>
+            <configuration>
+                <archive>
+                    <manifestEntries>
+                        <Build-Time>${maven.build.timestamp}</Build-Time>
+                    </manifestEntries>
+                    <manifestSections>
+                        <manifestSection>
+                            <name>Versions</name>
+                            <manifestEntries>
+                                <Implementation-Version>${project.version}</Implementation-Version>
+                                <Implementation-SCM-Revision>${buildNumber}</Implementation-SCM-Revision>
+                                <Implementation-SCM-Branch>${scmBranch}</Implementation-SCM-Branch>
+                            </manifestEntries>
+                        </manifestSection>
+                    </manifestSections>
+                </archive>
+            </configuration>
+        </plugin></plugins>
 	</build>
-</project>
+<scm><url>scm:git:ssh://git@gitea.intranda.com:goobi-workflow/goobi-plugin-step-xmpheader.git</url><connection>scm:git:ssh://git@gitea.intranda.com:goobi-workflow/goobi-plugin-step-xmpheader.git</connection></scm></project>

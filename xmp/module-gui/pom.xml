@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.intranda.goobi.plugins.step</groupId>
@@ -51,6 +50,44 @@
 					</execution>
 				</executions>
 			</plugin>
-		</plugins>
+		<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>buildnumber-maven-plugin</artifactId>
+				<version>1.4</version>
+
+				<executions>
+					<execution>
+						<phase>validate</phase>
+						<goals>
+							<goal>create</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<shortRevisionLength>10</shortRevisionLength>
+					<doCheck>false</doCheck>
+				</configuration>
+			</plugin><plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>3.1.0</version>
+            <configuration>
+                <archive>
+                    <manifestEntries>
+                        <Build-Time>${maven.build.timestamp}</Build-Time>
+                    </manifestEntries>
+                    <manifestSections>
+                        <manifestSection>
+                            <name>Versions</name>
+                            <manifestEntries>
+                                <Implementation-Version>${project.version}</Implementation-Version>
+                                <Implementation-SCM-Revision>${buildNumber}</Implementation-SCM-Revision>
+                                <Implementation-SCM-Branch>${scmBranch}</Implementation-SCM-Branch>
+                            </manifestEntries>
+                        </manifestSection>
+                    </manifestSections>
+                </archive>
+            </configuration>
+        </plugin></plugins>
 	</build>
-</project>
+<scm><url>scm:git:ssh://git@gitea.intranda.com:goobi-workflow/goobi-plugin-step-xmpheader.git</url><connection>scm:git:ssh://git@gitea.intranda.com:goobi-workflow/goobi-plugin-step-xmpheader.git</connection></scm></project>
