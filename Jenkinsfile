@@ -11,9 +11,7 @@ pipeline {
     buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '15', daysToKeepStr: '90', numToKeepStr: '')
   }
 
-  triggers {
-    upstream 'goobi-workflow/goobi/master'
-  }
+  
   
   stages {
     stage('prepare') {
