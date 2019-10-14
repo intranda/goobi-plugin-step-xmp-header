@@ -80,7 +80,9 @@ public class XmpPlugin implements IStepPluginVersion2 {
 
     private Config config;
 
-    private List<Path> derivateImages;
+    private Config defaultConfig;
+
+    private List<Path> derivativeImages;
     private List<Path> masterImages;
 
     private DocStruct logical = null;
@@ -105,6 +107,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
 
         SubnodeConfiguration myconfig = null;
 
+        SubnodeConfiguration fallbackconfig = null;
+
         // order of configuration is:
         // 1.) project name and step name matches
         // 2.) step name matches and project is *
@@ -112,6 +116,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
         // 4.) project name and step name are *
         try {
             myconfig = xmlConfig.configurationAt("/config[./project = '" + projectName + "'][./step = '" + step.getTitel() + "']");
+
         } catch (IllegalArgumentException e) {
             try {
                 myconfig = xmlConfig.configurationAt("/config[./project = '*'][./step = '" + step.getTitel() + "']");
@@ -123,14 +128,19 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 }
             }
         }
-
         config = initConfig(myconfig);
+        try {
+            fallbackconfig = xmlConfig.configurationAt("/config[@type = 'default']");
+            defaultConfig = initConfig(fallbackconfig);
+        } catch (IllegalArgumentException e) {
+            log.debug("No default block configured");
+        }
 
         try {
             if (config.isUseDerivateFolder()) {
-                derivateImages = StorageProvider.getInstance().listFiles(process.getImagesTifDirectory(false), NIOFileUtils.imageNameFilter);
+                derivativeImages = StorageProvider.getInstance().listFiles(process.getImagesTifDirectory(false), NIOFileUtils.imageNameFilter);
             } else {
-                derivateImages = null;
+                derivativeImages = null;
             }
             if (config.isUseMasterFolder()) {
                 masterImages = StorageProvider.getInstance().listFiles(process.getImagesOrigDirectory(false), NIOFileUtils.imageNameFilter);
@@ -202,22 +212,32 @@ public class XmpPlugin implements IStepPluginVersion2 {
 
         if (config.isUseMasterFolder()) {
             if (pages.size() != masterImages.size()) {
-                // size in folder and mets file don't match, error
-                writeLogEntry(LogType.ERROR, "Different number of objects in master folder and in mets file.");
-                return PluginReturnValue.ERROR;
-            }
-            if (!writeMetadataToImages(pages, masterImages) ) {
+                if (defaultConfig == null) {
+                    // size in folder and mets file don't match, error
+                    writeLogEntry(LogType.ERROR, "Different number of objects in master folder and in mets file.");
+                    return PluginReturnValue.ERROR;
+                } else {
+                    if (!writeDefaultMetadataToImages(masterImages)) {
+                        return PluginReturnValue.ERROR;
+                    }
+                }
+            } else if (!writeMetadataToImages(pages, masterImages)) {
                 return PluginReturnValue.ERROR;
             }
         }
 
         if (config.isUseDerivateFolder()) {
-            if (pages.size() != derivateImages.size()) {
-                // size in folder and mets file don't match, error
-                writeLogEntry(LogType.ERROR, "Different number of objects in media folder and in mets file.");
-                return PluginReturnValue.ERROR;
-            }
-            if (!writeMetadataToImages(pages, derivateImages)) {
+            if (pages.size() != derivativeImages.size()) {
+                if (defaultConfig == null) {
+                    // size in folder and mets file don't match, error
+                    writeLogEntry(LogType.ERROR, "Different number of objects in media folder and in mets file.");
+                    return PluginReturnValue.ERROR;
+                } else {
+                    if (!writeDefaultMetadataToImages(derivativeImages)) {
+                        return PluginReturnValue.ERROR;
+                    }
+                }
+            } else if (!writeMetadataToImages(pages, derivativeImages)) {
                 return PluginReturnValue.ERROR;
             }
         }
@@ -225,63 +245,34 @@ public class XmpPlugin implements IStepPluginVersion2 {
     }
 
     /**
-     * Write the configured fields to all pages. The metadata is collected for each page individually
+     * Write the configured default fields to all images. The metadata can be taken only from the main structure element
      * 
-     * @param pages list of docstruct elements of all pages
      * @param images list of image names
      */
 
-    private boolean writeMetadataToImages(List<DocStruct> pages, List<Path> images) {
+    private boolean writeDefaultMetadataToImages(List<Path> images) {
 
-        for (int i = 0; i < pages.size(); i++) {
-            DocStruct page = pages.get(i);
-            Path image = images.get(i);
+        for (Path image : images) {
 
             List<String> xmpFields = new ArrayList<>();
             // handle different xmp fields
-            for (ImageMetadataField xmpFieldConfiguration : config.getConfiguredFields()) {
+            for (ImageMetadataField xmpFieldConfiguration : defaultConfig.getConfiguredFields()) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(xmpFieldConfiguration.getXmpName());
                 sb.append("=");
                 StringBuilder completeValue = new StringBuilder();
                 for (IMetadataField configuredField : xmpFieldConfiguration.getFieldList()) {
                     StringBuilder fieldValue = new StringBuilder();
-                    // get information from docstructs
+
                     if (configuredField instanceof DocstructField) {
                         DocstructField docstructField = (DocstructField) configuredField;
-
                         String language = docstructField.getLanguage();
-                        String use = docstructField.getUse();
-                        // abort if page is not assigned to any docstruct
-                        List<Reference> pageReferences = page.getAllFromReferences();
-                        if (pageReferences == null || pageReferences.isEmpty()) {
-                            continue;
-                        }
-                        if (use.equals("first")) {
-                            // use first (probably main) element
-                            DocStruct ds = pageReferences.get(0).getSource();
-                            fieldValue.append(ds.getType().getNameByLanguage(language));
-                        } else if (use.equals("last")) {
-                            // use last element
-                            DocStruct ds = pageReferences.get(pageReferences.size() - 1).getSource();
-                            fieldValue.append(ds.getType().getNameByLanguage(language));
-                        } else {
-                            // use all referenced elements
-                            for (Reference ref : pageReferences) {
-                                // if its not first entry, add separator value
-                                if (fieldValue.length() != 0) {
-                                    fieldValue.append(docstructField.getSeparator());
-                                }
-                                fieldValue.append(ref.getSource().getType().getNameByLanguage(language));
-
-                            }
-                        }
+                        fieldValue.append(logical.getType().getNameByLanguage(language));
                         // if its not first entry, add separator value
                         if (completeValue.length() > 0) {
                             completeValue.append(xmpFieldConfiguration.getSeparator());
                         }
                         completeValue.append(fieldValue.toString());
-
                     } else if (configuredField instanceof MetadataField) {
                         MetadataField metadataField = (MetadataField) configuredField;
                         String name = metadataField.getName();
@@ -291,16 +282,11 @@ public class XmpPlugin implements IStepPluginVersion2 {
                             return false;
                         }
                         String value = null;
-                        List<Reference> pageReferences = page.getAllFromReferences();
 
                         switch (metadataField.getUse()) {
                             case "physical":
                                 // get metadata from physical main element (physical location)
                                 value = getMetadataValue(mdt, physical, metadataField.isUseFirst(), metadataField.getSeparator());
-                                break;
-                            case "page":
-                                // get metadata from physical page element (urn)
-                                value = getMetadataValue(mdt, page, metadataField.isUseFirst(), metadataField.getSeparator());
                                 break;
                             case "logical":
                                 // get metadata from top element (main title)
@@ -312,34 +298,6 @@ public class XmpPlugin implements IStepPluginVersion2 {
                                     value = getMetadataValue(mdt, anchor, metadataField.isUseFirst(), metadataField.getSeparator());
                                 }
                                 break;
-                            case "current":
-                                // get metadata from last element (chapter title)
-                                if (pageReferences == null || pageReferences.isEmpty()) {
-                                    break;
-                                }
-                                DocStruct ds = pageReferences.get(pageReferences.size() - 1).getSource();
-                                value = getMetadataValue(mdt, ds, metadataField.isUseFirst(), metadataField.getSeparator());
-                                // deepest in hierarchy
-                                break;
-                            default:
-                                //  any/all
-                                // get metadata from all logical elements
-                                if (pageReferences == null || pageReferences.isEmpty()) {
-                                    break;
-                                }
-                                StringBuilder metadata = new StringBuilder();
-                                for (Reference ref : pageReferences) {
-                                    String metadataValue = getMetadataValue(mdt, ref.getSource(), metadataField.isUseFirst(), metadataField
-                                            .getSeparator());
-                                    if (metadata.length() != 0) {
-                                        metadata.append(metadataField.getSeparator());
-                                    }
-                                    metadata.append(metadataValue);
-                                }
-                                value = metadata.toString();
-
-                                break;
-
                         }
                         if (StringUtils.isNotBlank(value)) {
                             if (fieldValue.length() != 0) {
@@ -362,112 +320,18 @@ public class XmpPlugin implements IStepPluginVersion2 {
                             completeValue.append(xmpFieldConfiguration.getSeparator());
                         }
                         completeValue.append(fieldValue.toString());
-
                     } else if (configuredField instanceof StaticText) {
-                        // add static text
-                        StaticText staticText = (StaticText) configuredField;
-                        if (completeValue.length() > 0) {
-                            completeValue.append(xmpFieldConfiguration.getSeparator());
-                        }
-                        completeValue.append(staticText.getText());
+                        getStaticTextConfiguration(xmpFieldConfiguration, completeValue, configuredField);
                     } else if (configuredField instanceof ProcesspropertyField) {
-
-                        ProcesspropertyField field = (ProcesspropertyField) configuredField;
-
-                        StringBuilder subValue = new StringBuilder();
-                        for (Processproperty prop : process.getEigenschaften()) {
-                            if (prop.getTitel().equals(field.getName())) {
-                                if (subValue.length() > 0) {
-                                    subValue.append(field.getSeparator());
-                                }
-                                subValue.append(prop.getWert());
-                                if (field.isUseFirst()) {
-                                    break;
-                                }
-                            }
-                        }
-                        if (subValue.length() > 0) {
-                            if (completeValue.length() > 0) {
-                                completeValue.append(xmpFieldConfiguration.getSeparator());
-                            }
-                            completeValue.append(subValue.toString());
-                        }
-                    }
-
-                    else if (configuredField instanceof TemplatepropertyField) {
-
-                        TemplatepropertyField field = (TemplatepropertyField) configuredField;
-                        StringBuilder subValue = new StringBuilder();
-                        if (process.getVorlagen() != null) {
-                            for (Template template : process.getVorlagen()) {
-                                for (Templateproperty prop : template.getEigenschaften()) {
-                                    if (prop.getTitel().equals(field.getName())) {
-                                        if (subValue.length() > 0) {
-                                            subValue.append(field.getSeparator());
-                                        }
-                                        subValue.append(prop.getWert());
-                                        if (field.isUseFirst()) {
-                                            break;
-                                        }
-                                    }
-
-                                }
-                            }
-                            if (subValue.length() > 0) {
-                                if (completeValue.length() > 0) {
-                                    completeValue.append(xmpFieldConfiguration.getSeparator());
-                                }
-                                completeValue.append(subValue.toString());
-                            }
-                        }
-                    }
-
-                    else if (configuredField instanceof WorkpiecepropertyField) {
-
-                        WorkpiecepropertyField field = (WorkpiecepropertyField) configuredField;
-                        StringBuilder subValue = new StringBuilder();
-                        if (process.getWerkstuecke() != null) {
-                            for (Masterpiece workpiece : process.getWerkstuecke()) {
-                                for (Masterpieceproperty prop : workpiece.getEigenschaften()) {
-                                    if (prop.getTitel().equals(field.getName())) {
-                                        if (subValue.length() > 0) {
-                                            subValue.append(field.getSeparator());
-                                        }
-                                        subValue.append(prop.getWert());
-                                        if (field.isUseFirst()) {
-                                            break;
-                                        }
-                                    }
-
-                                }
-                            }
-                            if (subValue.length() > 0) {
-                                if (completeValue.length() > 0) {
-                                    completeValue.append(xmpFieldConfiguration.getSeparator());
-                                }
-                                completeValue.append(subValue.toString());
-                            }
-                        }
+                        getProcessPropertyConfiguration(xmpFieldConfiguration, completeValue, configuredField);
+                    } else if (configuredField instanceof TemplatepropertyField) {
+                        getTemplatePropertyConfiguration(xmpFieldConfiguration, completeValue, configuredField);
+                    } else if (configuredField instanceof WorkpiecepropertyField) {
+                        getWorkpiecePropertyConfiguration(xmpFieldConfiguration, completeValue, configuredField);
                     } else if (configuredField instanceof FilenameField) {
-                        FilenameField field = (FilenameField) configuredField;
-                        if (completeValue.length() > 0) {
-                            completeValue.append(xmpFieldConfiguration.getSeparator());
-                        }
-                        if (field.isUseAbsolutePath()) {
-                            completeValue.append(image.toString());
-                        } else {
-                            completeValue.append(image.getFileName().toString());
-                        }
+                        getFilenameFieldConfiguration(image, xmpFieldConfiguration, completeValue, configuredField);
                     } else if (configuredField instanceof VariableField) {
-                        VariableField field = (VariableField) configuredField;
-
-                        String value = new VariableReplacer(digDoc, prefs, process, step).replace(field.getName());
-                        if (StringUtils.isNotBlank(value)) {
-                            if (completeValue.length() > 0) {
-                                completeValue.append(xmpFieldConfiguration.getSeparator());
-                            }
-                            completeValue.append(value);
-                        }
+                        getVariableFieldConfiguration(xmpFieldConfiguration, completeValue, configuredField);
                     }
                 }
                 sb.append(completeValue);
@@ -503,7 +367,330 @@ public class XmpPlugin implements IStepPluginVersion2 {
             }
 
         }
+        writeLogEntry(LogType.DEBUG, "Default metadata written into images");
+
         return true;
+    }
+
+    /**
+     * Write the configured fields to all pages. The metadata is collected for each page individually
+     * 
+     * @param pages list of docstruct elements of all pages
+     * @param images list of image names
+     */
+
+    private boolean writeMetadataToImages(List<DocStruct> pages, List<Path> images) {
+
+        for (int i = 0; i < pages.size(); i++) {
+            DocStruct page = pages.get(i);
+            Path image = images.get(i);
+
+            List<String> xmpFields = new ArrayList<>();
+            // handle different xmp fields
+            for (ImageMetadataField xmpFieldConfiguration : config.getConfiguredFields()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(xmpFieldConfiguration.getXmpName());
+                sb.append("=");
+                StringBuilder completeValue = new StringBuilder();
+                for (IMetadataField configuredField : xmpFieldConfiguration.getFieldList()) {
+                    StringBuilder fieldValue = new StringBuilder();
+                    // get information from docstructs
+                    if (configuredField instanceof DocstructField) {
+
+                        getDocstructConfiguration(xmpFieldConfiguration, fieldValue, configuredField, completeValue, page);
+
+                    } else if (configuredField instanceof MetadataField) {
+                        getMetadataConfiguration(fieldValue, xmpFieldConfiguration, completeValue, configuredField, page);
+                    } else if (configuredField instanceof StaticText) {
+                        getStaticTextConfiguration(xmpFieldConfiguration, completeValue, configuredField);
+                    } else if (configuredField instanceof ProcesspropertyField) {
+                        getProcessPropertyConfiguration(xmpFieldConfiguration, completeValue, configuredField);
+                    } else if (configuredField instanceof TemplatepropertyField) {
+                        getTemplatePropertyConfiguration(xmpFieldConfiguration, completeValue, configuredField);
+                    } else if (configuredField instanceof WorkpiecepropertyField) {
+                        getWorkpiecePropertyConfiguration(xmpFieldConfiguration, completeValue, configuredField);
+                    } else if (configuredField instanceof FilenameField) {
+                        getFilenameFieldConfiguration(image, xmpFieldConfiguration, completeValue, configuredField);
+                    } else if (configuredField instanceof VariableField) {
+                        getVariableFieldConfiguration(xmpFieldConfiguration, completeValue, configuredField);
+                    }
+                }
+                sb.append(completeValue);
+                xmpFields.add(sb.toString());
+            }
+            // get configured parameter list, replace PARAM and FILE with actual values
+            List<String> parameterList = new ArrayList<>();
+            for (String tok : config.getParameter()) {
+                if ("{PARAM}".equals(tok)) {
+                    for (String field : xmpFields) {
+                        parameterList.add(field);
+                    }
+                } else if ("{FILE}".equals(tok)) {
+                    parameterList.add(image.toString());
+                } else {
+                    parameterList.add(tok);
+                }
+            }
+            //            `["exiftool", "-overwrite_original", "-q", "-q", "-m", "-sep", ", ", "-xmp:location={}".format(location), "-xmp:Creator={}".format(photog), "-xmp:Description={}".format(im_caption), "-xmp:Subject={}".format(im_keywords),''
+            try {
+                // run script for current image
+                ShellScript s = new ShellScript(Paths.get(config.getCommand()));
+                int returnValue = s.run(parameterList);
+
+                if (returnValue != 0) {
+                    List<String> errors = s.getStdErr();
+                    writeLogEntry(LogType.ERROR, errors.toString());
+                    log.error(errors);
+                    return false;
+                }
+            } catch (IOException | InterruptedException e) {
+                log.error(e);
+            }
+
+        }
+        writeLogEntry(LogType.DEBUG, "Metadata written into images");
+        return true;
+    }
+
+    private void getDocstructConfiguration(ImageMetadataField xmpFieldConfiguration, StringBuilder fieldValue, IMetadataField configuredField,
+            StringBuilder completeValue, DocStruct page) {
+        DocstructField docstructField = (DocstructField) configuredField;
+
+        String language = docstructField.getLanguage();
+        String use = docstructField.getUse();
+        // abort if page is not assigned to any docstruct
+        List<Reference> pageReferences = page.getAllFromReferences();
+        if (pageReferences == null || pageReferences.isEmpty()) {
+            return;
+        }
+        if (use.equals("first")) {
+            // use first (probably main) element
+            DocStruct ds = pageReferences.get(0).getSource();
+            fieldValue.append(ds.getType().getNameByLanguage(language));
+        } else if (use.equals("last")) {
+            // use last element
+            DocStruct ds = pageReferences.get(pageReferences.size() - 1).getSource();
+            fieldValue.append(ds.getType().getNameByLanguage(language));
+        } else {
+            // use all referenced elements
+            for (Reference ref : pageReferences) {
+                // if its not first entry, add separator value
+                if (fieldValue.length() != 0) {
+                    fieldValue.append(docstructField.getSeparator());
+                }
+                fieldValue.append(ref.getSource().getType().getNameByLanguage(language));
+
+            }
+        }
+        // if its not first entry, add separator value
+        if (completeValue.length() > 0) {
+            completeValue.append(xmpFieldConfiguration.getSeparator());
+        }
+        completeValue.append(fieldValue.toString());
+    }
+
+    private void getMetadataConfiguration(StringBuilder fieldValue, ImageMetadataField xmpFieldConfiguration, StringBuilder completeValue,
+            IMetadataField configuredField, DocStruct page) {
+        MetadataField metadataField = (MetadataField) configuredField;
+        String name = metadataField.getName();
+        MetadataType mdt = prefs.getMetadataTypeByName(name);
+        if (mdt == null) {
+            writeLogEntry(LogType.ERROR, "Cannot find metadata type " + name);
+            return;
+        }
+        String value = null;
+
+        List<Reference> pageReferences = null;
+        if (page != null) {
+            pageReferences = page.getAllFromReferences();
+        }
+
+        switch (metadataField.getUse()) {
+            case "physical":
+                // get metadata from physical main element (physical location)
+                value = getMetadataValue(mdt, physical, metadataField.isUseFirst(), metadataField.getSeparator());
+                break;
+            case "page":
+                if (page != null) {
+                    // get metadata from physical page element (urn)
+                    value = getMetadataValue(mdt, page, metadataField.isUseFirst(), metadataField.getSeparator());
+                }
+                break;
+            case "logical":
+                // get metadata from top element (main title)
+                value = getMetadataValue(mdt, logical, metadataField.isUseFirst(), metadataField.getSeparator());
+                break;
+            case "anchor":
+                // get metadata from anchor element (publisher)
+                if (anchor != null) {
+                    value = getMetadataValue(mdt, anchor, metadataField.isUseFirst(), metadataField.getSeparator());
+                }
+                break;
+            case "current":
+                if (page != null) {
+                    // get metadata from last element (chapter title)
+                    if (pageReferences == null || pageReferences.isEmpty()) {
+                        break;
+                    }
+                    DocStruct ds = pageReferences.get(pageReferences.size() - 1).getSource();
+                    value = getMetadataValue(mdt, ds, metadataField.isUseFirst(), metadataField.getSeparator());
+                    // deepest in hierarchy
+                }
+                break;
+            default:
+                if (page != null) {
+                    //  any/all
+                    // get metadata from all logical elements
+                    if (pageReferences == null || pageReferences.isEmpty()) {
+                        break;
+                    }
+                    StringBuilder metadata = new StringBuilder();
+                    for (Reference ref : pageReferences) {
+                        String metadataValue = getMetadataValue(mdt, ref.getSource(), metadataField.isUseFirst(), metadataField.getSeparator());
+                        if (metadata.length() != 0) {
+                            metadata.append(metadataField.getSeparator());
+                        }
+                        metadata.append(metadataValue);
+                    }
+                    value = metadata.toString();
+                }
+                break;
+        }
+        if (StringUtils.isNotBlank(value)) {
+            if (fieldValue.length() != 0) {
+                fieldValue.append(metadataField.getSeparator());
+            }
+            // add prefix
+            if (StringUtils.isNotBlank(metadataField.getStaticPrefix())) {
+                fieldValue.append(metadataField.getStaticPrefix());
+            }
+            // add element
+            fieldValue.append(value);
+            // add suffix
+            if (StringUtils.isNotBlank(metadataField.getStaticSuffix())) {
+                fieldValue.append(metadataField.getStaticSuffix());
+            }
+        }
+
+        // if its not first entry, add separator value
+        if (completeValue.length() > 0) {
+            completeValue.append(xmpFieldConfiguration.getSeparator());
+        }
+        completeValue.append(fieldValue.toString());
+    }
+
+    private void getStaticTextConfiguration(ImageMetadataField xmpFieldConfiguration, StringBuilder completeValue, IMetadataField configuredField) {
+        StaticText staticText = (StaticText) configuredField;
+        if (completeValue.length() > 0) {
+            completeValue.append(xmpFieldConfiguration.getSeparator());
+        }
+        completeValue.append(staticText.getText());
+    }
+
+    private void getProcessPropertyConfiguration(ImageMetadataField xmpFieldConfiguration, StringBuilder completeValue,
+            IMetadataField configuredField) {
+        ProcesspropertyField field = (ProcesspropertyField) configuredField;
+
+        StringBuilder subValue = new StringBuilder();
+        for (Processproperty prop : process.getEigenschaften()) {
+            if (prop.getTitel().equals(field.getName())) {
+                if (subValue.length() > 0) {
+                    subValue.append(field.getSeparator());
+                }
+                subValue.append(prop.getWert());
+                if (field.isUseFirst()) {
+                    break;
+                }
+            }
+        }
+        if (subValue.length() > 0) {
+            if (completeValue.length() > 0) {
+                completeValue.append(xmpFieldConfiguration.getSeparator());
+            }
+            completeValue.append(subValue.toString());
+        }
+    }
+
+    private void getTemplatePropertyConfiguration(ImageMetadataField xmpFieldConfiguration, StringBuilder completeValue,
+            IMetadataField configuredField) {
+        TemplatepropertyField field = (TemplatepropertyField) configuredField;
+        StringBuilder subValue = new StringBuilder();
+        if (process.getVorlagen() != null) {
+            for (Template template : process.getVorlagen()) {
+                for (Templateproperty prop : template.getEigenschaften()) {
+                    if (prop.getTitel().equals(field.getName())) {
+                        if (subValue.length() > 0) {
+                            subValue.append(field.getSeparator());
+                        }
+                        subValue.append(prop.getWert());
+                        if (field.isUseFirst()) {
+                            break;
+                        }
+                    }
+
+                }
+            }
+            if (subValue.length() > 0) {
+                if (completeValue.length() > 0) {
+                    completeValue.append(xmpFieldConfiguration.getSeparator());
+                }
+                completeValue.append(subValue.toString());
+            }
+        }
+    }
+
+    private void getWorkpiecePropertyConfiguration(ImageMetadataField xmpFieldConfiguration, StringBuilder completeValue,
+            IMetadataField configuredField) {
+        WorkpiecepropertyField field = (WorkpiecepropertyField) configuredField;
+        StringBuilder subValue = new StringBuilder();
+        if (process.getWerkstuecke() != null) {
+            for (Masterpiece workpiece : process.getWerkstuecke()) {
+                for (Masterpieceproperty prop : workpiece.getEigenschaften()) {
+                    if (prop.getTitel().equals(field.getName())) {
+                        if (subValue.length() > 0) {
+                            subValue.append(field.getSeparator());
+                        }
+                        subValue.append(prop.getWert());
+                        if (field.isUseFirst()) {
+                            break;
+                        }
+                    }
+
+                }
+            }
+            if (subValue.length() > 0) {
+                if (completeValue.length() > 0) {
+                    completeValue.append(xmpFieldConfiguration.getSeparator());
+                }
+                completeValue.append(subValue.toString());
+            }
+        }
+    }
+
+    private void getVariableFieldConfiguration(ImageMetadataField xmpFieldConfiguration, StringBuilder completeValue,
+            IMetadataField configuredField) {
+        VariableField field = (VariableField) configuredField;
+
+        String value = new VariableReplacer(digDoc, prefs, process, step).replace(field.getName());
+        if (StringUtils.isNotBlank(value)) {
+            if (completeValue.length() > 0) {
+                completeValue.append(xmpFieldConfiguration.getSeparator());
+            }
+            completeValue.append(value);
+        }
+    }
+
+    private void getFilenameFieldConfiguration(Path image, ImageMetadataField xmpFieldConfiguration, StringBuilder completeValue,
+            IMetadataField configuredField) {
+        FilenameField field = (FilenameField) configuredField;
+        if (completeValue.length() > 0) {
+            completeValue.append(xmpFieldConfiguration.getSeparator());
+        }
+        if (field.isUseAbsolutePath()) {
+            completeValue.append(image.toString());
+        } else {
+            completeValue.append(image.getFileName().toString());
+        }
     }
 
     /**
