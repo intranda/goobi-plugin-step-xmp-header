@@ -35,7 +35,7 @@
 		<dependency>
 			<groupId>de.intranda.goobi.workflow</groupId>
 			<artifactId>goobi-core-jar</artifactId>
-			<version>3.0.45</version>
+			<version>3.0.46</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
