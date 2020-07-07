@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
@@ -787,13 +789,13 @@ public class XmpPlugin implements IStepPluginVersion2 {
         config.setUseDerivateFolder(xmlconfig.getBoolean("useDerivateFolder", false));
         config.setUseMasterFolder(xmlconfig.getBoolean("useMasterFolder", false));
 
-        List<SubnodeConfiguration> metadataFields = xmlconfig.configurationsAt("/imageMetadataField");
+        List<HierarchicalConfiguration> metadataFields = xmlconfig.configurationsAt("/imageMetadataField");
 
         config.setCommand(xmlconfig.getString("command"));
-        config.setParameter(xmlconfig.getList("parameter"));
+        config.setParameter(Arrays.asList(xmlconfig.getStringArray("parameter")));
 
         // read xmp fields
-        for (SubnodeConfiguration fieldElement : metadataFields) {
+        for (HierarchicalConfiguration fieldElement : metadataFields) {
             String name = fieldElement.getString("./@name");
             String fieldSeparator = fieldElement.getString("./separator", " ").replace("\\u0020", " ");
 
@@ -804,9 +806,9 @@ public class XmpPlugin implements IStepPluginVersion2 {
 
             // read field configuration
 
-            List<SubnodeConfiguration> goobiFieldElements = fieldElement.configurationsAt("/goobiField");
+            List<HierarchicalConfiguration> goobiFieldElements = fieldElement.configurationsAt("/goobiField");
 
-            for (SubnodeConfiguration goobiFieldElement : goobiFieldElements) {
+            for (HierarchicalConfiguration goobiFieldElement : goobiFieldElements) {
                 // metadata block
                 switch (goobiFieldElement.getString("./type", "metadata")) {
                     case "metadata":
@@ -819,7 +821,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         metadataField.setStaticSuffix(goobiFieldElement.getString("./staticSuffix", "").replace("\\u0020", " "));
                         imageMetadataField.addField(metadataField);
                         break;
-                        // docstruct
+                    // docstruct
                     case "docstruct":
 
                         DocstructField docStructField = new DocstructField();
@@ -828,7 +830,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         docStructField.setUse(goobiFieldElement.getString("./use", "last"));
                         imageMetadataField.addField(docStructField);
                         break;
-                        // static text
+                    // static text
                     case "staticText":
                         StaticText text = new StaticText();
                         text.setText(goobiFieldElement.getString("./text"));
