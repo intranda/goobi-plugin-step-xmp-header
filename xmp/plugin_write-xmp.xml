@@ -35,9 +35,13 @@
         <useMasterFolder>false</useMasterFolder>
         <!-- call this command to write the metadata into the image-->
         <command>/usr/bin/exiftool</command>
-        <!-- Each parameter is comma separated, double quotation " can be used.
-	    {PARAM} is replaced by the list of fields, {FILE} is replaced with the current file -->
-        <parameter>-overwrite_original, -q, -q, -m, {PARAM}, {FILE}</parameter>
+        <!-- Each parameter gets a separate node. {PARAM} is replaced by the list of fields, {FILE} is replaced with the current file -->
+        <parameter>-overwrite_original</parameter>
+        <parameter>-q</parameter>
+        <parameter>-q</parameter>
+        <parameter>-m</parameter>
+        <parameter>{PARAM}</parameter>
+        <parameter>{FILE}</parameter>
         <!-- @name - xmp field name -->
         <imageMetadataField name="-xmp:Location">
             <!-- separator - use this to separate the different entries. Default is white space (\u0020) -->
@@ -113,7 +117,12 @@
         <useDerivateFolder>true</useDerivateFolder>
         <useMasterFolder>false</useMasterFolder>
         <command>/usr/bin/exiftool</command>
-        <parameter>-overwrite_original, -q, -q, -m, {PARAM}, {FILE}</parameter>
+        <parameter>-overwrite_original</parameter>
+        <parameter>-q</parameter>
+        <parameter>-q</parameter>
+        <parameter>-m</parameter>
+        <parameter>{PARAM}</parameter>
+        <parameter>{FILE}</parameter>
         <!-- creator of the digital document -->
         <imageMetadataField name="-xmp-dc:Contributor">
             <goobiField>
