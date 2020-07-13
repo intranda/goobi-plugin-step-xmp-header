@@ -84,9 +84,6 @@ public class XmpPlugin implements IStepPluginVersion2 {
 
     private Config defaultConfig;
 
-    private List<Path> derivativeImages;
-    private List<Path> masterImages;
-
     private DocStruct logical = null;
     private DocStruct anchor = null;
     private DocStruct physical = null;
@@ -138,21 +135,6 @@ public class XmpPlugin implements IStepPluginVersion2 {
             log.debug("No default block configured");
         }
 
-        try {
-            if (config.isUseDerivateFolder()) {
-                derivativeImages = StorageProvider.getInstance().listFiles(process.getImagesTifDirectory(false), NIOFileUtils.imageNameFilter);
-            } else {
-                derivativeImages = null;
-            }
-            if (config.isUseMasterFolder()) {
-                masterImages = StorageProvider.getInstance().listFiles(process.getImagesOrigDirectory(false), NIOFileUtils.imageNameFilter);
-            } else {
-                masterImages = null;
-            }
-        } catch (IOException | InterruptedException | SwapException | DAOException e) {
-            log.error(e);
-        }
-
     }
 
     @Override
@@ -168,8 +150,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
     @Override
     public PluginReturnValue run() {
 
-        if (!config.isUseDerivateFolder() && !config.isUseMasterFolder()) {
-            // don't write derivates and master files
+        if (config.getFolders() == null || config.getFolders().size() == 0) {
+            // don't write any images
             return PluginReturnValue.FINISH;
         }
         prefs = process.getRegelsatz().getPreferences();
@@ -199,8 +181,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
             }
         } catch (UGHException | IOException | InterruptedException | SwapException | DAOException e) {
             // cannot read metadata, error
-            writeLogEntry(LogType.ERROR, "Cannot read metadata.");
-            log.error(e);
+            writeLogEntry(LogType.ERROR, "Cannot read metadata from METS file.");
+            log.error("Cannot read metadata from METS file.", e);
             return PluginReturnValue.ERROR;
         }
 
@@ -210,38 +192,31 @@ public class XmpPlugin implements IStepPluginVersion2 {
             return PluginReturnValue.ERROR;
         }
 
-        // check size of metadata and images in folder
+        // check size of each folder to use
+        for (String f : config.getFolders()) {
+        	try {
+				String folderName = step.getProzess().getConfiguredImageFolder(f);
+				List<Path> images = StorageProvider.getInstance().listFiles(process.getConfiguredImageFolder(f), NIOFileUtils.imageNameFilter);
 
-        if (config.isUseMasterFolder()) {
-            if (pages.size() != masterImages.size()) {
-                if (defaultConfig == null) {
-                    // size in folder and mets file don't match, error
-                    writeLogEntry(LogType.ERROR, "Different number of objects in master folder and in mets file.");
-                    return PluginReturnValue.ERROR;
-                } else {
-                    if (!writeDefaultMetadataToImages(masterImages)) {
-                        return PluginReturnValue.ERROR;
-                    }
-                }
-            } else if (!writeMetadataToImages(pages, masterImages)) {
-                return PluginReturnValue.ERROR;
-            }
-        }
-
-        if (config.isUseDerivateFolder()) {
-            if (pages.size() != derivativeImages.size()) {
-                if (defaultConfig == null) {
-                    // size in folder and mets file don't match, error
-                    writeLogEntry(LogType.ERROR, "Different number of objects in media folder and in mets file.");
-                    return PluginReturnValue.ERROR;
-                } else {
-                    if (!writeDefaultMetadataToImages(derivativeImages)) {
-                        return PluginReturnValue.ERROR;
-                    }
-                }
-            } else if (!writeMetadataToImages(pages, derivativeImages)) {
-                return PluginReturnValue.ERROR;
-            }
+				if (pages.size() != images.size()) {
+				    if (defaultConfig == null) {
+				        // size in folder and mets file don't match, error
+				        writeLogEntry(LogType.ERROR, "Different number of objects in folder '" + folderName + "' and in mets file. Default configuration is null.");
+				        return PluginReturnValue.ERROR;
+				    } else {
+				        if (!writeDefaultMetadataToImages(images)) {
+				        	writeLogEntry(LogType.ERROR, "Different number of objects in folder '" + folderName + "' and in mets file. Default metadata could not be written.");
+				            return PluginReturnValue.ERROR;
+				        }
+				    }
+				} else if (!writeMetadataToImages(pages, images)) {
+				    return PluginReturnValue.ERROR;
+				}
+			} catch (IOException | InterruptedException | SwapException | DAOException e) {
+				writeLogEntry(LogType.ERROR, "Error while writing metadata into images folder: " + e.getMessage());
+				log.error("Error while writing metadata into images folder", e);
+				return PluginReturnValue.ERROR;
+			}
         }
         return PluginReturnValue.FINISH;
     }
@@ -251,7 +226,6 @@ public class XmpPlugin implements IStepPluginVersion2 {
      * 
      * @param images list of image names
      */
-
     private boolean writeDefaultMetadataToImages(List<Path> images) {
 
         for (Path image : images) {
@@ -380,7 +354,6 @@ public class XmpPlugin implements IStepPluginVersion2 {
      * @param pages list of docstruct elements of all pages
      * @param images list of image names
      */
-
     private boolean writeMetadataToImages(List<DocStruct> pages, List<Path> images) {
 
         for (int i = 0; i < pages.size(); i++) {
@@ -705,7 +678,6 @@ public class XmpPlugin implements IStepPluginVersion2 {
      * @param separator use this character to separate entries, if useFirst is set to false
      * @return
      */
-
     private String getMetadataValue(MetadataType metadataType, DocStruct docstruct, boolean useFirst, String separator) {
         StringBuilder result = new StringBuilder();
         if (metadataType.getIsPerson()) {
@@ -786,9 +758,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
     private Config initConfig(SubnodeConfiguration xmlconfig) {
         Config config = new Config();
 
-        config.setUseDerivateFolder(xmlconfig.getBoolean("useDerivateFolder", false));
-        config.setUseMasterFolder(xmlconfig.getBoolean("useMasterFolder", false));
-
+        config.setFolders(Arrays.asList(xmlconfig.getStringArray("folder")));
         List<HierarchicalConfiguration> metadataFields = xmlconfig.configurationsAt("/imageMetadataField");
 
         config.setCommand(xmlconfig.getString("command"));
@@ -885,7 +855,6 @@ public class XmpPlugin implements IStepPluginVersion2 {
      * @param type {@link LogType}
      * @param text Text is added as content
      */
-
     private void writeLogEntry(LogType type, String text) {
         LogEntry logEntry = new LogEntry();
         logEntry.setContent(text);
