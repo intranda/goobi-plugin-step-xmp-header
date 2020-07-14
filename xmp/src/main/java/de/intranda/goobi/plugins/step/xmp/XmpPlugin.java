@@ -67,7 +67,7 @@ import ugh.exceptions.UGHException;
 public class XmpPlugin implements IStepPluginVersion2 {
 
     @Getter
-    private String title = "write-xmp";
+    private String title = "intranda_step_xmp_header";
 
     @Getter
     private PluginType type = PluginType.Step;

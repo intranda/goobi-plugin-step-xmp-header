@@ -10,7 +10,7 @@
 		<goobi.pluginversion>1.0</goobi.pluginversion>
 		<dest.folder.main>/opt/digiverso/goobi/plugins/step/</dest.folder.main>
 		<dest.folder.gui>/opt/digiverso/goobi/plugins/GUI/</dest.folder.gui>
-		<jar.name>plugin_intranda_step_xmp</jar.name>
+		<jar.name>plugin_intranda_step_xmp_header</jar.name>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
