@@ -50,8 +50,8 @@
                 <type>metadata</type>
                 <!-- name: - name of the metadata field -->
                 <name>PlaceOfPublication</name>
-                <!-- use: - default is logical , use value from the physical, logical, anchor, current, page docstruct or from all elements -->
-                <use>logical</use> <!-- physical|logical|anchor|page|current|all-->
+                <!-- use: - default is logical , use value from the physical, logical, anchor, current, page docstruct, last (lowest in hierarchy that has the metadata) or from all elements -->
+                <use>logical</use> <!-- physical|logical|anchor|page|current|last|all-->
                 <!-- separator - use this separator to separate the different occurences of a field, default is blank -->
                 <separator>;</separator>
                 <!-- useFirst: - use only the first occurrence or all - default is true -->

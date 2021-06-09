@@ -194,29 +194,31 @@ public class XmpPlugin implements IStepPluginVersion2 {
 
         // check size of each folder to use
         for (String f : config.getFolders()) {
-        	try {
-				String folderName = step.getProzess().getConfiguredImageFolder(f);
-				List<Path> images = StorageProvider.getInstance().listFiles(process.getConfiguredImageFolder(f), NIOFileUtils.imageNameFilter);
+            try {
+                String folderName = step.getProzess().getConfiguredImageFolder(f);
+                List<Path> images = StorageProvider.getInstance().listFiles(process.getConfiguredImageFolder(f), NIOFileUtils.imageNameFilter);
 
-				if (pages.size() != images.size()) {
-				    if (defaultConfig == null) {
-				        // size in folder and mets file don't match, error
-				        writeLogEntry(LogType.ERROR, "Different number of objects in folder '" + folderName + "' and in mets file. Default configuration is null.");
-				        return PluginReturnValue.ERROR;
-				    } else {
-				        if (!writeDefaultMetadataToImages(images)) {
-				        	writeLogEntry(LogType.ERROR, "Different number of objects in folder '" + folderName + "' and in mets file. Default metadata could not be written.");
-				            return PluginReturnValue.ERROR;
-				        }
-				    }
-				} else if (!writeMetadataToImages(pages, images)) {
-				    return PluginReturnValue.ERROR;
-				}
-			} catch (IOException | InterruptedException | SwapException | DAOException e) {
-				writeLogEntry(LogType.ERROR, "Error while writing metadata into images folder: " + e.getMessage());
-				log.error("Error while writing metadata into images folder", e);
-				return PluginReturnValue.ERROR;
-			}
+                if (pages.size() != images.size()) {
+                    if (defaultConfig == null) {
+                        // size in folder and mets file don't match, error
+                        writeLogEntry(LogType.ERROR,
+                                "Different number of objects in folder '" + folderName + "' and in mets file. Default configuration is null.");
+                        return PluginReturnValue.ERROR;
+                    } else {
+                        if (!writeDefaultMetadataToImages(images)) {
+                            writeLogEntry(LogType.ERROR, "Different number of objects in folder '" + folderName
+                                    + "' and in mets file. Default metadata could not be written.");
+                            return PluginReturnValue.ERROR;
+                        }
+                    }
+                } else if (!writeMetadataToImages(pages, images)) {
+                    return PluginReturnValue.ERROR;
+                }
+            } catch (IOException | InterruptedException | SwapException | DAOException e) {
+                writeLogEntry(LogType.ERROR, "Error while writing metadata into images folder: " + e.getMessage());
+                log.error("Error while writing metadata into images folder", e);
+                return PluginReturnValue.ERROR;
+            }
         }
         return PluginReturnValue.FINISH;
     }
@@ -510,6 +512,17 @@ public class XmpPlugin implements IStepPluginVersion2 {
                     DocStruct ds = pageReferences.get(pageReferences.size() - 1).getSource();
                     value = getMetadataValue(mdt, ds, metadataField.isUseFirst(), metadataField.getSeparator());
                     // deepest in hierarchy
+                }
+                break;
+            case "last":
+                if (pageReferences == null || pageReferences.isEmpty()) {
+                    break;
+                }
+                for (Reference ref : pageReferences) {
+                    String metadataValue = getMetadataValue(mdt, ref.getSource(), metadataField.isUseFirst(), metadataField.getSeparator());
+                    if (!StringUtils.isBlank(metadataValue)) {
+                        value = metadataValue;
+                    }
                 }
                 break;
             default:
