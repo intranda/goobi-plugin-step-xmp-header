@@ -152,12 +152,13 @@ public class XmpPlugin implements IStepPluginVersion2 {
 
         if (config.getFolders() == null || config.getFolders().size() == 0) {
             // don't write any images
-            return PluginReturnValue.FINISH;
+        	writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: There are no image folders configured to use for writing.");
+            return PluginReturnValue.ERROR;
         }
         prefs = process.getRegelsatz().getPreferences();
         // prefs not readable
         if (prefs == null) {
-            writeLogEntry(LogType.ERROR, "Ruleset is not valid.");
+            writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: The ruleset is not valid.");
             return PluginReturnValue.ERROR;
         }
 
@@ -181,14 +182,14 @@ public class XmpPlugin implements IStepPluginVersion2 {
             }
         } catch (UGHException | IOException | InterruptedException | SwapException | DAOException e) {
             // cannot read metadata, error
-            writeLogEntry(LogType.ERROR, "Cannot read metadata from METS file.");
-            log.error("Cannot read metadata from METS file.", e);
+            writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: Cannot read metadata from METS file.");
+            log.error("Error while writing the XMP headers: Cannot read metadata from METS file for process with ID " + process.getId(), e);
             return PluginReturnValue.ERROR;
         }
 
         if (pages == null || pages.isEmpty()) {
             // no pages referenced in mets file, error
-            writeLogEntry(LogType.ERROR, "Cannot write xmp data, no pages are referenced in mets file.");
+            writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: No pages are referenced in mets file.");
             return PluginReturnValue.ERROR;
         }
 
@@ -202,11 +203,11 @@ public class XmpPlugin implements IStepPluginVersion2 {
                     if (defaultConfig == null) {
                         // size in folder and mets file don't match, error
                         writeLogEntry(LogType.ERROR,
-                                "Different number of objects in folder '" + folderName + "' and in mets file. Default configuration is null.");
+                                "Error while writing the XMP headers: Different number of objects in folder '" + folderName + "' and in mets file. Default configuration is null.");
                         return PluginReturnValue.ERROR;
                     } else {
                         if (!writeDefaultMetadataToImages(images)) {
-                            writeLogEntry(LogType.ERROR, "Different number of objects in folder '" + folderName
+                            writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: Different number of objects in folder '" + folderName
                                     + "' and in mets file. Default metadata could not be written.");
                             return PluginReturnValue.ERROR;
                         }
@@ -215,8 +216,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
                     return PluginReturnValue.ERROR;
                 }
             } catch (IOException | InterruptedException | SwapException | DAOException e) {
-                writeLogEntry(LogType.ERROR, "Error while writing metadata into images folder: " + e.getMessage());
-                log.error("Error while writing metadata into images folder", e);
+                writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: Error while writing metadata into images folder: " + e.getMessage());
+                log.error("Error while writing the XMP headers: Error while writing metadata into images folder for process with ID " + process.getId(), e);
                 return PluginReturnValue.ERROR;
             }
         }
@@ -256,7 +257,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         String name = metadataField.getName();
                         MetadataType mdt = prefs.getMetadataTypeByName(name);
                         if (mdt == null) {
-                            writeLogEntry(LogType.ERROR, "Cannot find metadata type " + name);
+                            writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: Cannot find metadata type " + name);
                             return false;
                         }
                         String value = null;
@@ -336,8 +337,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
 
                 if (returnValue != 0) {
                     List<String> errors = s.getStdErr();
-                    writeLogEntry(LogType.ERROR, errors.toString());
-                    log.error(errors);
+                    writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: " + errors.toString());
+                    log.error("Error while writing the XMP headers for process with ID " + process.getId() + ": " + errors);
                     return false;
                 }
             } catch (IOException | InterruptedException e) {
@@ -345,8 +346,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
             }
 
         }
-        writeLogEntry(LogType.DEBUG, "Default metadata written into images");
-
+        writeLogEntry(LogType.INFO, "Writing the XMP headers: Default metadata was written into the images.");
         return true;
     }
 
@@ -416,8 +416,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
 
                 if (returnValue != 0) {
                     List<String> errors = s.getStdErr();
-                    writeLogEntry(LogType.ERROR, errors.toString());
-                    log.error(errors);
+                    writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: " + errors.toString());
+                    log.error("Error while writing the XMP headers for process with ID " + process.getId() + ": " + errors);
                     return false;
                 }
             } catch (IOException | InterruptedException e) {
@@ -425,7 +425,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
             }
 
         }
-        writeLogEntry(LogType.DEBUG, "Metadata written into images");
+        writeLogEntry(LogType.INFO, "Writing the XMP headers: The metadata was written into the images.");
         return true;
     }
 
@@ -472,7 +472,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
         String name = metadataField.getName();
         MetadataType mdt = prefs.getMetadataTypeByName(name);
         if (mdt == null) {
-            writeLogEntry(LogType.ERROR, "Cannot find metadata type " + name);
+            writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: Cannot find metadata type " + name);
             return;
         }
         String value = null;
@@ -874,7 +874,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
         logEntry.setProcessId(process.getId());
         logEntry.setType(type);
         logEntry.setCreationDate(new Date());
-        logEntry.setUserName("xmp plugin");
+        logEntry.setUserName("Write XMP header plugin");
         ProcessManager.saveLogEntry(logEntry);
     }
 
