@@ -1,6 +1,7 @@
 package de.intranda.goobi.plugins.step.xmp;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -41,6 +42,7 @@ import de.intranda.goobi.plugins.step.xmp.util.TemplatepropertyField;
 import de.intranda.goobi.plugins.step.xmp.util.VariableField;
 import de.intranda.goobi.plugins.step.xmp.util.WorkpiecepropertyField;
 import de.sub.goobi.config.ConfigPlugins;
+import de.sub.goobi.config.ConfigurationHelper;
 import de.sub.goobi.helper.NIOFileUtils;
 import de.sub.goobi.helper.ShellScript;
 import de.sub.goobi.helper.StorageProvider;
@@ -152,7 +154,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
 
         if (config.getFolders() == null || config.getFolders().size() == 0) {
             // don't write any images
-        	writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: There are no image folders configured to use for writing.");
+            writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: There are no image folders configured to use for writing.");
             return PluginReturnValue.ERROR;
         }
         prefs = process.getRegelsatz().getPreferences();
@@ -195,33 +197,71 @@ public class XmpPlugin implements IStepPluginVersion2 {
 
         // check size of each folder to use
         for (String f : config.getFolders()) {
+            Path tempFolder = null;
             try {
                 String folderName = step.getProzess().getConfiguredImageFolder(f);
-                List<Path> images = StorageProvider.getInstance().listFiles(process.getConfiguredImageFolder(f), NIOFileUtils.imageNameFilter);
+
+                List<Path> images = null;
+                if (ConfigurationHelper.getInstance().useS3()) {
+
+                    // create temporary folder
+                    tempFolder = Paths.get(ConfigurationHelper.getInstance().getTemporaryFolder(), "" + process.getId(), f);
+                    if (!Files.exists(tempFolder)) {
+                        Files.createDirectories(tempFolder);
+                    }
+
+                    // download files into temporary folder
+                    StorageProvider.getInstance().downloadDirectory(Paths.get(folderName), tempFolder);
+
+                    // use downloaded images
+                    images = StorageProvider.getInstance().listFiles(tempFolder.toString());
+                } else {
+                    images = StorageProvider.getInstance().listFiles(process.getConfiguredImageFolder(f), NIOFileUtils.imageNameFilter);
+                }
 
                 if (pages.size() != images.size()) {
                     if (defaultConfig == null) {
                         // size in folder and mets file don't match, error
-                        writeLogEntry(LogType.ERROR,
-                                "Error while writing the XMP headers: Different number of objects in folder '" + folderName + "' and in mets file. Default configuration is null.");
+                        writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: Different number of objects in folder '" + folderName
+                                + "' and in mets file. Default configuration is null.");
+                        cleanupTemporaryFolder(tempFolder);
                         return PluginReturnValue.ERROR;
                     } else {
                         if (!writeDefaultMetadataToImages(images)) {
                             writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: Different number of objects in folder '" + folderName
                                     + "' and in mets file. Default metadata could not be written.");
+                            cleanupTemporaryFolder(tempFolder);
                             return PluginReturnValue.ERROR;
                         }
                     }
                 } else if (!writeMetadataToImages(pages, images)) {
+                    cleanupTemporaryFolder(tempFolder);
                     return PluginReturnValue.ERROR;
                 }
+                if (ConfigurationHelper.getInstance().useS3()) {
+                    // upload images
+                    StorageProvider.getInstance().uploadDirectory(tempFolder, Paths.get(folderName));
+
+                    // cleanup temporary folder
+                    cleanupTemporaryFolder(tempFolder);
+                }
             } catch (IOException | InterruptedException | SwapException | DAOException e) {
-                writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: Error while writing metadata into images folder: " + e.getMessage());
-                log.error("Error while writing the XMP headers: Error while writing metadata into images folder for process with ID " + process.getId(), e);
+                writeLogEntry(LogType.ERROR,
+                        "Error while writing the XMP headers: Error while writing metadata into images folder: " + e.getMessage());
+                log.error(
+                        "Error while writing the XMP headers: Error while writing metadata into images folder for process with ID " + process.getId(),
+                        e);
+                cleanupTemporaryFolder(tempFolder);
                 return PluginReturnValue.ERROR;
             }
         }
         return PluginReturnValue.FINISH;
+    }
+
+    private void cleanupTemporaryFolder(Path tempFolder) {
+        if (tempFolder != null) {
+            StorageProvider.getInstance().deleteDir(tempFolder);
+        }
     }
 
     /**
@@ -804,7 +844,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         metadataField.setStaticSuffix(goobiFieldElement.getString("./staticSuffix", "").replace("\\u0020", " "));
                         imageMetadataField.addField(metadataField);
                         break;
-                    // docstruct
+                        // docstruct
                     case "docstruct":
 
                         DocstructField docStructField = new DocstructField();
@@ -813,7 +853,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         docStructField.setUse(goobiFieldElement.getString("./use", "last"));
                         imageMetadataField.addField(docStructField);
                         break;
-                    // static text
+                        // static text
                     case "staticText":
                         StaticText text = new StaticText();
                         text.setText(goobiFieldElement.getString("./text"));
