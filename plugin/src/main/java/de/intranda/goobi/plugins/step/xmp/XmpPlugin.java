@@ -740,7 +740,15 @@ public class XmpPlugin implements IStepPluginVersion2 {
             if (personList != null && !personList.isEmpty()) {
                 for (Person person : personList) {
                     // get display name
-                    String value = person.getDisplayname();
+                    String value = null;
+                    if (StringUtils.isNotBlank(person.getLastname()) && StringUtils.isNotBlank(person.getFirstname())) {
+                        value = person.getLastname() + ", " + person.getFirstname();
+                    } else if (StringUtils.isBlank(person.getFirstname())) {
+                        value = person.getLastname();
+                    } else {
+                        value = person.getFirstname();
+                    }
+
                     if (StringUtils.isNotBlank(value)) {
                         // if useFirst, return value
                         if (useFirst) {
