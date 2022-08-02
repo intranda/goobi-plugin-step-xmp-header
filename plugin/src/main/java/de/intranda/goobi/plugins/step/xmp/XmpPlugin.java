@@ -182,7 +182,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
             if (physical != null) {
                 pages = physical.getAllChildren();
             }
-        } catch (UGHException | IOException | InterruptedException | SwapException | DAOException e) {
+        } catch (UGHException | IOException | SwapException e) {
             // cannot read metadata, error
             writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: Cannot read metadata from METS file.");
             log.error("Error while writing the XMP headers: Cannot read metadata from METS file for process with ID " + process.getId(), e);
@@ -245,7 +245,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                     // cleanup temporary folder
                     cleanupTemporaryFolder(tempFolder);
                 }
-            } catch (IOException | InterruptedException | SwapException | DAOException e) {
+            } catch (IOException | SwapException | DAOException e) {
                 writeLogEntry(LogType.ERROR,
                         "Error while writing the XMP headers: Error while writing metadata into images folder: " + e.getMessage());
                 log.error(
