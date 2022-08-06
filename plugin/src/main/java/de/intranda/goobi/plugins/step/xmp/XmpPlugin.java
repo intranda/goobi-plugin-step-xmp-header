@@ -170,16 +170,20 @@ public class XmpPlugin implements IStepPluginVersion2 {
         physical = null;
         List<DocStruct> pages = null;
         try {
-            // read metadata
-            fileformat = process.readMetadataFile();
+        	// read metadata
+            log.debug("XMP Plugin: read METS file");
+        	fileformat = process.readMetadataFile();
             digDoc = fileformat.getDigitalDocument();
             logical = digDoc.getLogicalDocStruct();
             anchor = logical;
             if (logical.getType().isAnchor()) {
+                log.debug("XMP Plugin: Anchor available");
                 logical = logical.getAllChildren().get(0);
             }
+            log.debug("XMP Plugin: read physical topstruct");
             physical = digDoc.getPhysicalDocStruct();
             if (physical != null) {
+                log.debug("XMP Plugin: read children of physical docstruct");
                 pages = physical.getAllChildren();
             }
         } catch (UGHException | IOException | SwapException e) {
@@ -196,32 +200,41 @@ public class XmpPlugin implements IStepPluginVersion2 {
         }
 
         // check size of each folder to use
+        log.debug("XMP Plugin: start running through all configured folders");
         for (String f : config.getFolders()) {
             Path tempFolder = null;
             try {
                 String folderName = step.getProzess().getConfiguredImageFolder(f);
-
+                log.debug("XMP Plugin: run through folder " + folderName);
                 List<Path> images = null;
                 if (ConfigurationHelper.getInstance().useS3()) {
-
+                    log.debug("XMP Plugin: S3 is used, use this mode");
                     // create temporary folder
                     tempFolder = Paths.get(ConfigurationHelper.getInstance().getTemporaryFolder(), "" + process.getId(), f);
+                    log.debug("XMP Plugin: tempfolder for S3 is " + tempFolder);
                     if (!Files.exists(tempFolder)) {
                         Files.createDirectories(tempFolder);
                     }
 
                     // download files into temporary folder
+                    log.debug("XMP Plugin: load images");
                     StorageProvider.getInstance().downloadDirectory(Paths.get(folderName), tempFolder);
 
                     // use downloaded images
                     images = StorageProvider.getInstance().listFiles(tempFolder.toString());
+                    log.debug("XMP Plugin: Images from S3 loaded ");
+
                 } else {
+                	log.debug("XMP Plugin: no S3 used");
                     images = StorageProvider.getInstance().listFiles(process.getConfiguredImageFolder(f), NIOFileUtils.imageNameFilter);
+                    log.debug("XMP Plugin: Images without S3 loaded");
                 }
 
                 if (pages.size() != images.size()) {
+                	log.debug("XMP Plugin: number of images and assigned pages is different");
                     if (defaultConfig == null) {
                         // size in folder and mets file don't match, error
+                    	log.debug("XMP Plugin: no default config, stop processing and delete tempfolder " + tempFolder);
                         writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: Different number of objects in folder '" + folderName
                                 + "' and in mets file. Default configuration is null.");
                         cleanupTemporaryFolder(tempFolder);
@@ -230,19 +243,23 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         if (!writeDefaultMetadataToImages(images)) {
                             writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: Different number of objects in folder '" + folderName
                                     + "' and in mets file. Default metadata could not be written.");
+                            log.debug("XMP Plugin: cleanup temporary folder " + tempFolder);
                             cleanupTemporaryFolder(tempFolder);
                             return PluginReturnValue.ERROR;
                         }
                     }
                 } else if (!writeMetadataToImages(pages, images)) {
+                	log.debug("XMP Plugin: cleanup temporary folder " + tempFolder);
                     cleanupTemporaryFolder(tempFolder);
                     return PluginReturnValue.ERROR;
                 }
                 if (ConfigurationHelper.getInstance().useS3()) {
                     // upload images
+                	log.debug("XMP Plugin: upload tempfolder content from " + tempFolder + " to " + Paths.get(folderName));
                     StorageProvider.getInstance().uploadDirectory(tempFolder, Paths.get(folderName));
 
                     // cleanup temporary folder
+                    log.debug("XMP Plugin: cleanup temporary folder " + tempFolder);
                     cleanupTemporaryFolder(tempFolder);
                 }
             } catch (IOException | SwapException | DAOException e) {
@@ -251,6 +268,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 log.error(
                         "Error while writing the XMP headers: Error while writing metadata into images folder for process with ID " + process.getId(),
                         e);
+                log.debug("XMP Plugin: cleanup temporary folder " + tempFolder);
                 cleanupTemporaryFolder(tempFolder);
                 return PluginReturnValue.ERROR;
             }
@@ -270,13 +288,14 @@ public class XmpPlugin implements IStepPluginVersion2 {
      * @param images list of image names
      */
     private boolean writeDefaultMetadataToImages(List<Path> images) {
-
+    	log.debug("XMP Plugin: write default metadata to images " + images);
         for (Path image : images) {
-
+        	log.debug("XMP Plugin: write default data into " + image.toString());
             List<String> xmpFields = new ArrayList<>();
             // handle different xmp fields
             for (ImageMetadataField xmpFieldConfiguration : defaultConfig.getConfiguredFields()) {
-                StringBuilder sb = new StringBuilder();
+            	log.debug("XMP Plugin: preparation for field " + xmpFieldConfiguration.getXmpName());
+            	StringBuilder sb = new StringBuilder();
                 sb.append(xmpFieldConfiguration.getXmpName());
                 sb.append("=");
                 StringBuilder completeValue = new StringBuilder();
@@ -354,6 +373,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                     }
                 }
                 sb.append(completeValue);
+                log.debug("XMP Plugin: content for the field is: " + completeValue);
                 xmpFields.add(sb.toString());
             }
             // get configured parameter list, replace PARAM and FILE with actual values
@@ -374,7 +394,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 // run script for current image
                 ShellScript s = new ShellScript(Paths.get(config.getCommand()));
                 int returnValue = s.run(parameterList);
-
+                log.debug("XMP Plugin: return code for command '" + s.getCommandString() + "' is " + returnValue);
+                
                 if (returnValue != 0) {
                     List<String> errors = s.getStdErr();
                     writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: " + errors.toString());
@@ -386,6 +407,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
             }
 
         }
+        log.debug("XMP Plugin: default metadata was written");
         writeLogEntry(LogType.INFO, "Writing the XMP headers: Default metadata was written into the images.");
         return true;
     }
