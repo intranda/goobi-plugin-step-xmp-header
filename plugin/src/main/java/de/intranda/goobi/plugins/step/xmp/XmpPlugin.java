@@ -419,15 +419,17 @@ public class XmpPlugin implements IStepPluginVersion2 {
      * @param images list of image names
      */
     private boolean writeMetadataToImages(List<DocStruct> pages, List<Path> images) {
-
+    	log.debug("XMP Plugin: write metadata from pages "  + pages + " to images " + images);
         for (int i = 0; i < pages.size(); i++) {
             DocStruct page = pages.get(i);
             Path image = images.get(i);
-
+            log.debug("XMP Plugin: write data into " + image.toString());
+            
             List<String> xmpFields = new ArrayList<>();
             // handle different xmp fields
             for (ImageMetadataField xmpFieldConfiguration : config.getConfiguredFields()) {
-                StringBuilder sb = new StringBuilder();
+            	log.debug("XMP Plugin: preparation for field " + xmpFieldConfiguration.getXmpName());
+            	StringBuilder sb = new StringBuilder();
                 sb.append(xmpFieldConfiguration.getXmpName());
                 sb.append("=");
                 StringBuilder completeValue = new StringBuilder();
@@ -455,6 +457,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                     }
                 }
                 sb.append(completeValue);
+                log.debug("XMP Plugin: content for the field is: " + completeValue);
                 xmpFields.add(sb.toString());
             }
             // get configured parameter list, replace PARAM and FILE with actual values
@@ -475,7 +478,8 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 // run script for current image
                 ShellScript s = new ShellScript(Paths.get(config.getCommand()));
                 int returnValue = s.run(parameterList);
-
+                log.debug("XMP Plugin: return code for command '" + s.getCommandString() + "' is " + returnValue);
+                
                 if (returnValue != 0) {
                     List<String> errors = s.getStdErr();
                     writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: " + errors.toString());
@@ -487,6 +491,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
             }
 
         }
+        log.debug("XMP Plugin: metadata was written");
         writeLogEntry(LogType.INFO, "Writing the XMP headers: The metadata was written into the images.");
         return true;
     }
