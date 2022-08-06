@@ -51,7 +51,7 @@ import de.sub.goobi.helper.exceptions.DAOException;
 import de.sub.goobi.helper.exceptions.SwapException;
 import de.sub.goobi.persistence.managers.ProcessManager;
 import lombok.Getter;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
@@ -63,7 +63,7 @@ import ugh.dl.Prefs;
 import ugh.dl.Reference;
 import ugh.exceptions.UGHException;
 
-@Log4j
+@Log4j2
 @PluginImplementation
 
 public class XmpPlugin implements IStepPluginVersion2 {
