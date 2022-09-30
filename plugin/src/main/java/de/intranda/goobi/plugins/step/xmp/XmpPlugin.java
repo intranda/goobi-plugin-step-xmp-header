@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -16,7 +15,6 @@ import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
 import org.apache.commons.lang.StringUtils;
-import org.goobi.beans.LogEntry;
 import org.goobi.beans.Masterpiece;
 import org.goobi.beans.Masterpieceproperty;
 import org.goobi.beans.Process;
@@ -43,13 +41,13 @@ import de.intranda.goobi.plugins.step.xmp.util.VariableField;
 import de.intranda.goobi.plugins.step.xmp.util.WorkpiecepropertyField;
 import de.sub.goobi.config.ConfigPlugins;
 import de.sub.goobi.config.ConfigurationHelper;
+import de.sub.goobi.helper.Helper;
 import de.sub.goobi.helper.NIOFileUtils;
 import de.sub.goobi.helper.ShellScript;
 import de.sub.goobi.helper.StorageProvider;
 import de.sub.goobi.helper.VariableReplacer;
 import de.sub.goobi.helper.exceptions.DAOException;
 import de.sub.goobi.helper.exceptions.SwapException;
-import de.sub.goobi.persistence.managers.ProcessManager;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
@@ -170,9 +168,9 @@ public class XmpPlugin implements IStepPluginVersion2 {
         physical = null;
         List<DocStruct> pages = null;
         try {
-        	// read metadata
+            // read metadata
             log.debug("XMP Plugin: read METS file");
-        	fileformat = process.readMetadataFile();
+            fileformat = process.readMetadataFile();
             digDoc = fileformat.getDigitalDocument();
             logical = digDoc.getLogicalDocStruct();
             anchor = logical;
@@ -225,16 +223,16 @@ public class XmpPlugin implements IStepPluginVersion2 {
                     log.debug("XMP Plugin: Images from S3 loaded ");
 
                 } else {
-                	log.debug("XMP Plugin: no S3 used");
+                    log.debug("XMP Plugin: no S3 used");
                     images = StorageProvider.getInstance().listFiles(process.getConfiguredImageFolder(f), NIOFileUtils.imageNameFilter);
                     log.debug("XMP Plugin: Images without S3 loaded");
                 }
 
                 if (pages.size() != images.size()) {
-                	log.debug("XMP Plugin: number of images and assigned pages is different");
+                    log.debug("XMP Plugin: number of images and assigned pages is different");
                     if (defaultConfig == null) {
                         // size in folder and mets file don't match, error
-                    	log.debug("XMP Plugin: no default config, stop processing and delete tempfolder " + tempFolder);
+                        log.debug("XMP Plugin: no default config, stop processing and delete tempfolder " + tempFolder);
                         writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: Different number of objects in folder '" + folderName
                                 + "' and in mets file. Default configuration is null.");
                         cleanupTemporaryFolder(tempFolder);
@@ -249,13 +247,13 @@ public class XmpPlugin implements IStepPluginVersion2 {
                         }
                     }
                 } else if (!writeMetadataToImages(pages, images)) {
-                	log.debug("XMP Plugin: cleanup temporary folder " + tempFolder);
+                    log.debug("XMP Plugin: cleanup temporary folder " + tempFolder);
                     cleanupTemporaryFolder(tempFolder);
                     return PluginReturnValue.ERROR;
                 }
                 if (ConfigurationHelper.getInstance().useS3()) {
                     // upload images
-                	log.debug("XMP Plugin: upload tempfolder content from " + tempFolder + " to " + Paths.get(folderName));
+                    log.debug("XMP Plugin: upload tempfolder content from " + tempFolder + " to " + Paths.get(folderName));
                     StorageProvider.getInstance().uploadDirectory(tempFolder, Paths.get(folderName));
 
                     // cleanup temporary folder
@@ -288,14 +286,14 @@ public class XmpPlugin implements IStepPluginVersion2 {
      * @param images list of image names
      */
     private boolean writeDefaultMetadataToImages(List<Path> images) {
-    	log.debug("XMP Plugin: write default metadata to images " + images);
+        log.debug("XMP Plugin: write default metadata to images " + images);
         for (Path image : images) {
-        	log.debug("XMP Plugin: write default data into " + image.toString());
+            log.debug("XMP Plugin: write default data into " + image.toString());
             List<String> xmpFields = new ArrayList<>();
             // handle different xmp fields
             for (ImageMetadataField xmpFieldConfiguration : defaultConfig.getConfiguredFields()) {
-            	log.debug("XMP Plugin: preparation for field " + xmpFieldConfiguration.getXmpName());
-            	StringBuilder sb = new StringBuilder();
+                log.debug("XMP Plugin: preparation for field " + xmpFieldConfiguration.getXmpName());
+                StringBuilder sb = new StringBuilder();
                 sb.append(xmpFieldConfiguration.getXmpName());
                 sb.append("=");
                 StringBuilder completeValue = new StringBuilder();
@@ -395,7 +393,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 ShellScript s = new ShellScript(Paths.get(config.getCommand()));
                 int returnValue = s.run(parameterList);
                 log.debug("XMP Plugin: return code for command '" + s.getCommandString() + "' is " + returnValue);
-                
+
                 if (returnValue != 0) {
                     List<String> errors = s.getStdErr();
                     writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: " + errors.toString());
@@ -419,17 +417,17 @@ public class XmpPlugin implements IStepPluginVersion2 {
      * @param images list of image names
      */
     private boolean writeMetadataToImages(List<DocStruct> pages, List<Path> images) {
-    	log.debug("XMP Plugin: write metadata from pages "  + pages + " to images " + images);
+        log.debug("XMP Plugin: write metadata from pages "  + pages + " to images " + images);
         for (int i = 0; i < pages.size(); i++) {
             DocStruct page = pages.get(i);
             Path image = images.get(i);
             log.debug("XMP Plugin: write data into " + image.toString());
-            
+
             List<String> xmpFields = new ArrayList<>();
             // handle different xmp fields
             for (ImageMetadataField xmpFieldConfiguration : config.getConfiguredFields()) {
-            	log.debug("XMP Plugin: preparation for field " + xmpFieldConfiguration.getXmpName());
-            	StringBuilder sb = new StringBuilder();
+                log.debug("XMP Plugin: preparation for field " + xmpFieldConfiguration.getXmpName());
+                StringBuilder sb = new StringBuilder();
                 sb.append(xmpFieldConfiguration.getXmpName());
                 sb.append("=");
                 StringBuilder completeValue = new StringBuilder();
@@ -479,7 +477,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 ShellScript s = new ShellScript(Paths.get(config.getCommand()));
                 int returnValue = s.run(parameterList);
                 log.debug("XMP Plugin: return code for command '" + s.getCommandString() + "' is " + returnValue);
-                
+
                 if (returnValue != 0) {
                     List<String> errors = s.getStdErr();
                     writeLogEntry(LogType.ERROR, "Error while writing the XMP headers: " + errors.toString());
@@ -944,13 +942,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
      * @param text Text is added as content
      */
     private void writeLogEntry(LogType type, String text) {
-        LogEntry logEntry = new LogEntry();
-        logEntry.setContent(text);
-        logEntry.setProcessId(process.getId());
-        logEntry.setType(type);
-        logEntry.setCreationDate(new Date());
-        logEntry.setUserName("Write XMP header plugin");
-        ProcessManager.saveLogEntry(logEntry);
+        Helper.addMessageToProcessJournal(step.getProzess().getId(), type, text, "Write XMP header plugin");
     }
 
 }
