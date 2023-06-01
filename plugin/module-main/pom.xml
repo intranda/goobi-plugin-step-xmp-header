@@ -2,6 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.intranda.goobi.plugins.step</groupId>
   <artifactId>xmp-main</artifactId>
+  <version>23.05</version>
   <parent>
     <groupId>de.intranda.goobi.plugins.step</groupId>
     <artifactId>xmp</artifactId>
