@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.intranda.goobi.plugins.step</groupId>
   <artifactId>xmp</artifactId>
-  <version>23.07</version>
+  <version>23.07.1</version>
   <packaging>pom</packaging>
   <properties>
     <goobi.pluginversion>1.0</goobi.pluginversion>
@@ -11,7 +11,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <goobi.version>23.07</goobi.version>
+    <goobi.version>23.07.1</goobi.version>
   </properties>
   <url>http://maven.apache.org</url>
   <distributionManagement>
