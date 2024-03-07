@@ -7,7 +7,7 @@
     <relativePath />
   </parent>
   <groupId>io.goobi.workflow.plugin</groupId>
-  <artifactId>plugin-step-xmp</artifactId>
+  <artifactId>plugin-step-xmp-header</artifactId>
   <packaging>pom</packaging>
   <modules>
     <module>module-base</module>
