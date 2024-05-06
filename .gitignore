@@ -1,0 +1,22 @@
+
+# Junk files
+*~
+.DS_Store
+
+# Build
+target/
+bin/
+build/
+node_modules/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# IntelliJ IDEA
+.idea
+*.iml
+
+
+/classes/
