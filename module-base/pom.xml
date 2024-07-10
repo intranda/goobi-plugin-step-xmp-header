@@ -3,7 +3,7 @@
   <parent>
     <groupId>io.goobi.workflow.plugin</groupId>
     <artifactId>plugin-step-xmp-header</artifactId>
-    <version>24.05</version>
+    <version>24.06</version>
   </parent>
   <artifactId>plugin-step-xmp-header-base</artifactId>
   <packaging>jar</packaging>
