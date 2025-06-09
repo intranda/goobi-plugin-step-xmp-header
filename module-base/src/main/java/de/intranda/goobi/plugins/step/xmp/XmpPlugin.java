@@ -15,13 +15,11 @@ import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
 import org.apache.commons.lang.StringUtils;
-import org.goobi.beans.Masterpiece;
-import org.goobi.beans.Masterpieceproperty;
+import org.goobi.beans.GoobiProperty;
 import org.goobi.beans.Process;
 import org.goobi.beans.Processproperty;
 import org.goobi.beans.Step;
-import org.goobi.beans.Template;
-import org.goobi.beans.Templateproperty;
+
 import org.goobi.production.enums.LogType;
 import org.goobi.production.enums.PluginGuiType;
 import org.goobi.production.enums.PluginReturnValue;
@@ -645,12 +643,12 @@ public class XmpPlugin implements IStepPluginVersion2 {
         ProcesspropertyField field = (ProcesspropertyField) configuredField;
 
         StringBuilder subValue = new StringBuilder();
-        for (Processproperty prop : process.getEigenschaften()) {
-            if (prop.getTitel().equals(field.getName())) {
+        for (GoobiProperty prop : process.getEigenschaften()) {
+            if (prop.getPropertyName().equals(field.getName())) {
                 if (subValue.length() > 0) {
                     subValue.append(field.getSeparator());
                 }
-                subValue.append(prop.getWert());
+                subValue.append(prop.getPropertyValue());
                 if (field.isUseFirst()) {
                     break;
                 }
@@ -668,20 +666,17 @@ public class XmpPlugin implements IStepPluginVersion2 {
             IMetadataField configuredField) {
         TemplatepropertyField field = (TemplatepropertyField) configuredField;
         StringBuilder subValue = new StringBuilder();
-        if (process.getVorlagen() != null) {
-            for (Template template : process.getVorlagen()) {
-                for (Templateproperty prop : template.getEigenschaften()) {
-                    if (prop.getTitel().equals(field.getName())) {
+
+                for (GoobiProperty prop : process.getEigenschaften()) {
+                    if (prop.getPropertyName().equals(field.getName())) {
                         if (subValue.length() > 0) {
                             subValue.append(field.getSeparator());
                         }
-                        subValue.append(prop.getWert());
+                        subValue.append(prop.getPropertyValue());
                         if (field.isUseFirst()) {
                             break;
                         }
                     }
-
-                }
             }
             if (subValue.length() > 0) {
                 if (completeValue.length() > 0) {
@@ -689,27 +684,26 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 }
                 completeValue.append(subValue.toString());
             }
-        }
+        
     }
 
     private void getWorkpiecePropertyConfiguration(ImageMetadataField xmpFieldConfiguration, StringBuilder completeValue,
             IMetadataField configuredField) {
         WorkpiecepropertyField field = (WorkpiecepropertyField) configuredField;
         StringBuilder subValue = new StringBuilder();
-        if (process.getWerkstuecke() != null) {
-            for (Masterpiece workpiece : process.getWerkstuecke()) {
-                for (Masterpieceproperty prop : workpiece.getEigenschaften()) {
-                    if (prop.getTitel().equals(field.getName())) {
+      
+                for (GoobiProperty prop : process.getEigenschaften()) {
+                    if (prop.getPropertyName().equals(field.getName())) {
                         if (subValue.length() > 0) {
                             subValue.append(field.getSeparator());
                         }
-                        subValue.append(prop.getWert());
+                        subValue.append(prop.getPropertyValue());
                         if (field.isUseFirst()) {
                             break;
                         }
-                    }
+                    
 
-                }
+                    }
             }
             if (subValue.length() > 0) {
                 if (completeValue.length() > 0) {
@@ -717,7 +711,7 @@ public class XmpPlugin implements IStepPluginVersion2 {
                 }
                 completeValue.append(subValue.toString());
             }
-        }
+        
     }
 
     private void getVariableFieldConfiguration(ImageMetadataField xmpFieldConfiguration, StringBuilder completeValue,
