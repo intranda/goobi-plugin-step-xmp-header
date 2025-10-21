@@ -3,6 +3,10 @@ title: Writing XMP metadata to image files
 identifier: intranda_step_xmp_header
 published: true
 description: This is the technical documentation for the Goobi plugin for writing XMP metadata into image files.
+keywords:
+    - Goobi workflow
+    - Plugin
+    - Step Plugin
 ---
 ## Introduction
 This documentation describes the installation, configuration and use of the XMP metadata plugin in Goobi. This plugin makes it possible to write various metadata from Goobi into the XMP headers of image files. Metadata can be written at the item level as well as metadata at the image level (for example, belonging to structural elements).
