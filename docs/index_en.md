@@ -63,7 +63,7 @@ This configuration file can be adapted during operation. An example configuratio
                 <name>PlaceOfPublication</name>
                 <!-- use: - default is logical , use value from the physical, logical, anchor, current, page docstruct, last (lowest in hierarchy that has the metadata) or from all elements -->
                 <use>logical</use> <!-- physical|logical|anchor|page|current|last|all-->
-                <!-- separator - use this separator to separate the different occurences of a field, default is blank -->
+                <!-- separator - use this separator to separate the different occurrences of a field, default is blank -->
                 <separator>;</separator>
                 <!-- useFirst: - use only the first occurence or all - default is true -->
                 <useFirst>false</useFirst>
@@ -110,7 +110,7 @@ This configuration file can be adapted during operation. An example configuratio
 
 The `config` block is repeatable and can therefore define different metadata in different projects. The sub-elements `project` and `step` are used to check whether the current block should be used for the current step. First, the system checks whether there is an entry that contains both the project name and the step name. If this is not the case, the system searches for an entry for any projects marked with the `*` and for the step name used. If also no entry was found, a search is made for the project name and any steps, otherwise the default block applies, where both `project` and `step` contain .
 
-In the two fields `usDerivateFolder` and `useMasterFolder` you can define whether the changes should be applied to the files in the respective folder. At least one of the two values must be set to `true`.
+In the two fields `useDerivateFolder` and `useMasterFolder` you can define whether the changes should be applied to the files in the respective folder. At least one of the two values must be set to `true`.
 
 With `command` you define the tool that is used to write the data. Different tools can be used here depending on the operating system or file formats used.
 

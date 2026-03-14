@@ -20,7 +20,7 @@ Zur Nutzung des Plugins muss es an den folgenden Ort kopiert werden:
 ```
 
 ## Überblick und Funktionsweise
-In Goobi muss das Plugin `write-xmp` in den Schritten ausgewählt werden, in denen die Bildmetadaten geschrieben werden sollen. Außerdem sollten diese Schritte als `automatisch`markiert werden, damit sie nicht manuell angestoßen werden müssen. Da das Schreiben der Metadaten auf den Daten der METS Datei beruht und eine fertige Paginierung und Strukutrierung erwartet, sollte das Schreiben der XMP-Header erst nach der Metadatenbearbeitung passieren.
+In Goobi muss das Plugin `write-xmp` in den Schritten ausgewählt werden, in denen die Bildmetadaten geschrieben werden sollen. Außerdem sollten diese Schritte als `automatisch` markiert werden, damit sie nicht manuell angestoßen werden müssen. Da das Schreiben der Metadaten auf den Daten der METS Datei beruht und eine fertige Paginierung und Strukturierung erwartet, sollte das Schreiben der XMP-Header erst nach der Metadatenbearbeitung passieren.
 
 ![Konfiguration des Schritts in Goobi Workflow](screen1.png)
 
@@ -111,7 +111,7 @@ Der `<config>` Block ist wiederholbar und kann so in unterschiedlichen Projekten
 
 In den beiden Feldern `<useDerivateFolder>` und `<useMasterFolder>` kann festgelegt werden, ob die Änderungen auf die Dateien im jeweiligen Ordner angewendet werden sollen. Mindestens einer der beiden Werte muss auf `true` gesetzt sein.
 
-Mittels `<command>` wird das Tool definiert, das zum schreiben der Daten verwendet wird. Hier können je nach Betriebssystem oder verwendeter Dateiformate unterschiedliche Tools verwendet werden.
+Mittels `<command>` wird das Tool definiert, das zum Schreiben der Daten verwendet wird. Hier können je nach Betriebssystem oder verwendeter Dateiformate unterschiedliche Tools verwendet werden.
 
 Das Element `<parameter>` definiert die einzelnen Parameter, die beim Aufruf des Tools übergeben werden. Dabei können zwei Variablen verwendet werden. Mittels `{FILE}` wird der absolute Pfad zur Datei übergeben, die manipuliert werden soll und `{PARAM}` enthält die konfigurierten Elemente.
 
@@ -126,24 +126,24 @@ Jedes `<goobiField>` Element enthält eine Reihe von Unterelementen. Mittels die
 Die `processproperty`, `templateproperty` und `workpieceproperty`-Eigenschaften werden in der Goobi Datenbank gesucht. Sie enthalten daher immer identische Werte für alle Bilder. Es werden bis zu drei weitere Unterfelder erwartet:
 
 * `<name>`: enthält den Namen der Eigenschaft, dessen Wert genutzt werden soll
-* `<useFirst>`: enthält dieses Feld den Wert true, wird der erste gefundene Wert genommen, ansonsetn wird nach weiteren Werten gesucht
+* `<useFirst>`: enthält dieses Feld den Wert true, wird der erste gefundene Wert genommen, ansonsten wird nach weiteren Werten gesucht
 * `<separator>`: die hier konfigurierten Zeichen werden als Separator genutzt, falls mehr als ein Eintrag gefunden wurde.
 
 Bei der Verwendung von `staticText` wird ein zusätzliches Feld `<text>` erwartet. Dessen Inhalt wird unverändert übernommen.
 
 Wenn es sich um ein `metadata`-Feld handelt, werden eine Reihe von weiteren Unterelementen erwartet.
 
-* `<name>`: enthält den internen Mame des Metadatums
+* `<name>`: enthält den internen Name des Metadatums
 * `<use>`: definiert, in welchen Strukturelementen nach dem Feld gesucht werden soll. Es sind folgende Werte möglich:
   * `logical`: die Suche ist auf das Hauptelement wie Monographie oder Band beschränkt. Hier stehen üblicherweise die Daten aus dem OPAC.
   * `anchor`: die Suche ist auf den anchor wie Mehrbändiges Werk oder Zeitschrift beschränkt.
   * `physical`: die Suche ist auf das Element physSequence beschränkt. Hier kann zum Beispiel die URN des Werkes gefunden werden.
-  * `current`: die Suche wird nur in dem Element durchgeführt, dass dem aktuellen Bild zugeordet wurde und in der Hierarchie am tiefsten liegt. Zum Beispiel ein Kapitel oder ein Artikel.
+  * `current`: die Suche wird nur in dem Element durchgeführt, dass dem aktuellen Bild zugeordnet wurde und in der Hierarchie am tiefsten liegt. Zum Beispiel ein Kapitel oder ein Artikel.
   * `page`: die Suche wird nur innerhalb des page Elements durchgeführt. Hier stehen üblicherweise die granulare URNs oder die physische und logische Seitennummer
   * `last` : die Suche wird in allen logischen Elementen durchgeführt, die dem Bild zugeordnet sind. Es wird das Metadatum mit der niedrigsten Hierarchiestufe übernommen.
   * `all`: die Suche wird in allen logischen Elementen durchgeführt, die dem Bild zugeordnet sind. Dabei wird mit dem höchsten begonnen. Alle gefundenen Werte werden konkateniert.
 * `<separator>`: die hier konfigurierten Zeichen werden als Separator genutzt, falls mehr als ein Eintrag gefunden wurde.
-* `<useFirst>`: enthält dieses Feld den Wert `true`, wird der erste gefundene Wert genommen, ansonsetn wird nach weiteren Werten gesucht
+* `<useFirst>`: enthält dieses Feld den Wert `true`, wird der erste gefundene Wert genommen, ansonsten wird nach weiteren Werten gesucht
 * `<staticPrefix>`: dieser Text wird vor den Metadateninhalt gesetzt
 * `<staticSuffix>`: dieser Text wird an den Metadateninhalt angehängt.
 
@@ -154,7 +154,7 @@ Bei `docstruct` werden folgende Felder erwartet:
 * `<language>`: hiermit wird definiert, in welcher Sprache der Name der Strukturelemente geschrieben werden soll. Fehlt die Angabe, wird der interne Name genutzt.
 * `<use>`: definiert, welches Strukturelement genutzt werden soll. Folgende Werte sind hier valide:
   * `first`: Nutze das erste dem Bild zugeordnete Element. Üblicherweise ist dies die Monographie oder der Band
-  * `last`: Nutze das Element, dass dem aktuellen Bild zugeordet wurde und in der Hierarchie am tiefsten liegt. Zum Beispiel ein Kapitel oder ein Artikel.
+  * `last`: Nutze das Element, dass dem aktuellen Bild zugeordnet wurde und in der Hierarchie am tiefsten liegt. Zum Beispiel ein Kapitel oder ein Artikel.
   * `all`: Nutze alle zugewiesenen Strukturelemente, beginnend mit dem höchsten Element.
 * `<separator>`: Dieser Separator wird bei der Verwendung von `all` zur Trennung der einzelnen Strukturelemente genutzt.
 
